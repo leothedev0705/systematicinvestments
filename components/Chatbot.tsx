@@ -16,9 +16,6 @@ import {
   PiggyBank,
   Shield,
   Loader2,
-  Settings,
-  Key,
-  Check,
   AlertCircle,
   RefreshCw,
   Mic,
@@ -44,14 +41,10 @@ const quickQuestions = [
 
 export const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [apiKey, setApiKey] = useState("server");
-  const [tempApiKey, setTempApiKey] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [useServerKey, setUseServerKey] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -72,15 +65,8 @@ export const Chatbot: React.FC = () => {
     }
   }, []);
 
-  // Check for custom API key in localStorage
+  // Load TTS preference
   useEffect(() => {
-    const savedKey = localStorage.getItem("sifi_api_key");
-    if (savedKey) {
-      setApiKey(savedKey);
-      setTempApiKey(savedKey);
-      setUseServerKey(false);
-    }
-    // Load TTS preference
     const ttsPreference = localStorage.getItem("sifi_tts");
     if (ttsPreference !== null) {
       setTtsEnabled(ttsPreference === "true");
@@ -94,10 +80,10 @@ export const Chatbot: React.FC = () => {
 
   // Focus input when chat opens
   useEffect(() => {
-    if (isOpen && !showSettings) {
+    if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen, showSettings]);
+  }, [isOpen]);
 
   // Cleanup speech on unmount
   useEffect(() => {
@@ -119,7 +105,7 @@ export const Chatbot: React.FC = () => {
     recognitionRef.current = new SpeechRecognition();
     recognitionRef.current.continuous = false;
     recognitionRef.current.interimResults = true;
-    recognitionRef.current.lang = 'en-IN'; // Indian English
+    recognitionRef.current.lang = 'en-IN';
 
     recognitionRef.current.onstart = () => {
       setIsListening(true);
@@ -156,10 +142,8 @@ export const Chatbot: React.FC = () => {
   const speak = (text: string) => {
     if (!synthRef.current || !ttsEnabled) return;
 
-    // Cancel any ongoing speech
     synthRef.current.cancel();
 
-    // Clean text for speech (remove markdown)
     const cleanText = text
       .replace(/#{1,6}\s/g, '')
       .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -174,7 +158,6 @@ export const Chatbot: React.FC = () => {
     utterance.rate = 1;
     utterance.pitch = 1;
 
-    // Try to use an Indian English voice
     const voices = synthRef.current.getVoices();
     const indianVoice = voices.find(v => v.lang === 'en-IN') || voices.find(v => v.lang.startsWith('en'));
     if (indianVoice) {
@@ -204,20 +187,9 @@ export const Chatbot: React.FC = () => {
     }
   };
 
-  const saveApiKey = () => {
-    if (tempApiKey.trim()) {
-      setApiKey(tempApiKey.trim());
-      localStorage.setItem("sifi_api_key", tempApiKey.trim());
-      setUseServerKey(false);
-      setShowSettings(false);
-      setError(null);
-    }
-  };
-
   const sendMessage = async (content: string) => {
     if (!content.trim()) return;
 
-    // Stop any ongoing speech
     stopSpeaking();
 
     const userMessage: Message = {
@@ -241,7 +213,6 @@ export const Chatbot: React.FC = () => {
             role: m.role,
             content: m.content,
           })),
-          apiKey: useServerKey ? null : apiKey,
         }),
       });
 
@@ -260,7 +231,6 @@ export const Chatbot: React.FC = () => {
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Speak the response
       if (ttsEnabled) {
         speak(data.message);
       }
@@ -356,12 +326,6 @@ export const Chatbot: React.FC = () => {
                   </button>
                 )}
                 <button
-                  onClick={() => setShowSettings(!showSettings)}
-                  className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-                >
-                  <Settings className="w-4 h-4 text-white" />
-                </button>
-                <button
                   onClick={clearChat}
                   className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
                   title="Clear chat"
@@ -379,62 +343,6 @@ export const Chatbot: React.FC = () => {
                 </button>
               </div>
             </div>
-
-            {/* Settings Panel */}
-            <AnimatePresence>
-              {showSettings && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="bg-primary/5 border-b border-card-border overflow-hidden"
-                >
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Key className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium text-primary">
-                        Custom API Key (Optional)
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        type="password"
-                        value={tempApiKey}
-                        onChange={(e) => setTempApiKey(e.target.value)}
-                        placeholder="sk-... (leave empty to use default)"
-                        className="flex-1 px-3 py-2 text-sm rounded-lg border border-card-border bg-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-                      />
-                      <button
-                        onClick={saveApiKey}
-                        disabled={!tempApiKey.trim()}
-                        className="px-3 py-2 bg-accent text-primary text-sm font-medium rounded-lg hover:bg-accent-light transition-colors disabled:opacity-50"
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted mt-2">
-                      {useServerKey
-                        ? "✓ Using Systematic Investments' AI service."
-                        : "Using your custom API key."}
-                    </p>
-                    {!useServerKey && (
-                      <button
-                        onClick={() => {
-                          localStorage.removeItem("sifi_api_key");
-                          setApiKey("server");
-                          setTempApiKey("");
-                          setUseServerKey(true);
-                          setShowSettings(false);
-                        }}
-                        className="text-xs text-accent hover:underline mt-2"
-                      >
-                        Reset to default
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">

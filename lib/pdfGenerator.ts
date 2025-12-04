@@ -47,23 +47,6 @@ export interface PDFConfig {
   chartImage?: string;
 }
 
-// Convert image URL to base64
-async function getImageAsBase64(url: string): Promise<string> {
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    console.error('Error loading image:', error);
-    return '';
-  }
-}
-
 export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -76,40 +59,32 @@ export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
   const margin = 15;
   let currentY = 0;
 
-  // Try to load the letterhead image
-  let letterheadImage: string | null = null;
-  try {
-    letterheadImage = await getImageAsBase64('/images/letterhead.png');
-  } catch (error) {
-    console.log('Letterhead image not found, using text-based header');
-  }
-
-  // ========== LETTERHEAD WITH IMAGE ==========
+  // ========== SIMPLE CLEAN HEADER ==========
   const drawLetterhead = () => {
-    if (letterheadImage) {
-      // Add letterhead image - it spans the full width at top
-      // The image aspect ratio from your letterhead: approximately 8.5:1.5 (wide header)
-      const imgWidth = pageWidth;
-      const imgHeight = 35; // Adjust based on your letterhead proportions
-      
-      doc.addImage(letterheadImage, 'PNG', 0, 0, imgWidth, imgHeight);
-      currentY = imgHeight + 8;
-    } else {
-      // Fallback text-based header
-      doc.setFillColor(...COLORS.green);
-      doc.rect(0, 0, pageWidth, 25, 'F');
-      
-      doc.setTextColor(...COLORS.white);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.text('Systematic Investment', margin, 15);
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'italic');
-      doc.text('You Can Park Your Future Here', margin, 22);
-      
-      currentY = 35;
-    }
+    // Clean green header bar
+    doc.setFillColor(...COLORS.green);
+    doc.rect(0, 0, pageWidth, 28, 'F');
+    
+    // Company name
+    doc.setTextColor(...COLORS.white);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('Systematic Investment', margin, 14);
+    
+    // Tagline
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'italic');
+    doc.text('You Can Park Your Future Here', margin, 22);
+    
+    // Contact on right
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    const rightX = pageWidth - margin;
+    doc.text('9821255653 / 9920735653', rightX, 12, { align: 'right' });
+    doc.text('info.systematic@gmail.com', rightX, 18, { align: 'right' });
+    doc.text('Thane (W), 400607', rightX, 24, { align: 'right' });
+    
+    currentY = 38;
   };
 
   // ========== FOOTER ==========
