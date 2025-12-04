@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
+import { Chatbot } from "@/components/Chatbot";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -49,6 +50,7 @@ export default function RootLayout({
     <html lang="en" className={`${outfit.variable} ${sourceSans.variable}`}>
       <body className="min-h-screen bg-background font-sans">
         {children}
+        <Chatbot />
       </body>
     </html>
   );
