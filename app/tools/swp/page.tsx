@@ -20,7 +20,8 @@ import {
   Facebook,
   Check,
   Link as LinkIcon,
-  ExternalLink
+  ExternalLink,
+  RotateCcw
 } from "lucide-react";
 import { generateCalculatorPDF, formatCurrencyPDF, type PDFConfig } from "@/lib/pdfGenerator";
 
@@ -45,6 +46,14 @@ export default function SWPCalculator() {
   const [withdrawalPerMonth, setWithdrawalPerMonth] = useState(10000);
   const [expectedReturn, setExpectedReturn] = useState(8);
   const [timePeriod, setTimePeriod] = useState(5);
+
+  // Clear all inputs
+  const clearAll = () => {
+    setTotalInvestment(0);
+    setWithdrawalPerMonth(0);
+    setExpectedReturn(0);
+    setTimePeriod(0);
+  };
   
   // UI State
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -119,7 +128,17 @@ export default function SWPCalculator() {
 
   // Calculate SWP results
   const results = useMemo(() => {
-    const monthlyRate = Math.pow(1 + expectedReturn / 100, 1 / 12) - 1;
+    // Handle edge cases
+    if (totalInvestment <= 0 || timePeriod <= 0 || expectedReturn < 0) {
+      return {
+        totalInvestment: 0,
+        totalWithdrawal: 0,
+        finalValue: 0,
+        monthlyBreakdown: [],
+      };
+    }
+
+    const monthlyRate = expectedReturn > 0 ? Math.pow(1 + expectedReturn / 100, 1 / 12) - 1 : 0;
     const totalMonths = timePeriod * 12;
     
     let balance = totalInvestment;
@@ -235,6 +254,17 @@ export default function SWPCalculator() {
               transition={{ delay: 0.1 }}
               className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-sm"
             >
+              {/* Clear All Button */}
+              <div className="flex justify-end mb-6">
+                <button
+                  onClick={clearAll}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Clear All
+                </button>
+              </div>
+
               {/* Input 1: Total Investment */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
@@ -246,7 +276,7 @@ export default function SWPCalculator() {
                       value={formatNumber(totalInvestment)}
                       onChange={(e) => {
                         const value = parseInt(e.target.value.replace(/,/g, '')) || 0;
-                        setTotalInvestment(Math.min(10000000, Math.max(10000, value)));
+                        setTotalInvestment(Math.min(10000000, Math.max(0, value)));
                       }}
                       className="w-24 bg-transparent text-[#00D09C] font-semibold text-right focus:outline-none"
                     />
@@ -254,14 +284,16 @@ export default function SWPCalculator() {
                 </div>
                 <input
                   type="range"
-                  min={10000}
+                  min={0}
                   max={10000000}
                   step={10000}
                   value={totalInvestment}
                   onChange={(e) => setTotalInvestment(parseInt(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00D09C]"
                   style={{
-                    background: `linear-gradient(to right, #00D09C 0%, #00D09C ${((totalInvestment - 10000) / (10000000 - 10000)) * 100}%, #E5E7EB ${((totalInvestment - 10000) / (10000000 - 10000)) * 100}%, #E5E7EB 100%)`
+                    background: totalInvestment > 0 
+                      ? `linear-gradient(to right, #00D09C 0%, #00D09C ${(totalInvestment / 10000000) * 100}%, #E5E7EB ${(totalInvestment / 10000000) * 100}%, #E5E7EB 100%)`
+                      : '#E5E7EB'
                   }}
                 />
               </div>
@@ -277,7 +309,7 @@ export default function SWPCalculator() {
                       value={formatNumber(withdrawalPerMonth)}
                       onChange={(e) => {
                         const value = parseInt(e.target.value.replace(/,/g, '')) || 0;
-                        setWithdrawalPerMonth(Math.min(100000, Math.max(500, value)));
+                        setWithdrawalPerMonth(Math.min(100000, Math.max(0, value)));
                       }}
                       className="w-20 bg-transparent text-[#00D09C] font-semibold text-right focus:outline-none"
                     />
@@ -285,14 +317,16 @@ export default function SWPCalculator() {
                 </div>
                 <input
                   type="range"
-                  min={500}
+                  min={0}
                   max={100000}
                   step={500}
                   value={withdrawalPerMonth}
                   onChange={(e) => setWithdrawalPerMonth(parseInt(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00D09C]"
                   style={{
-                    background: `linear-gradient(to right, #00D09C 0%, #00D09C ${((withdrawalPerMonth - 500) / (100000 - 500)) * 100}%, #E5E7EB ${((withdrawalPerMonth - 500) / (100000 - 500)) * 100}%, #E5E7EB 100%)`
+                    background: withdrawalPerMonth > 0
+                      ? `linear-gradient(to right, #00D09C 0%, #00D09C ${(withdrawalPerMonth / 100000) * 100}%, #E5E7EB ${(withdrawalPerMonth / 100000) * 100}%, #E5E7EB 100%)`
+                      : '#E5E7EB'
                   }}
                 />
               </div>
@@ -307,7 +341,7 @@ export default function SWPCalculator() {
                       value={expectedReturn}
                       onChange={(e) => {
                         const value = parseFloat(e.target.value) || 0;
-                        setExpectedReturn(Math.min(30, Math.max(1, value)));
+                        setExpectedReturn(Math.min(30, Math.max(0, value)));
                       }}
                       className="w-10 bg-transparent text-[#00D09C] font-semibold text-right focus:outline-none"
                     />
@@ -316,14 +350,16 @@ export default function SWPCalculator() {
                 </div>
                 <input
                   type="range"
-                  min={1}
+                  min={0}
                   max={30}
                   step={0.5}
                   value={expectedReturn}
                   onChange={(e) => setExpectedReturn(parseFloat(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00D09C]"
                   style={{
-                    background: `linear-gradient(to right, #00D09C 0%, #00D09C ${((expectedReturn - 1) / (30 - 1)) * 100}%, #E5E7EB ${((expectedReturn - 1) / (30 - 1)) * 100}%, #E5E7EB 100%)`
+                    background: expectedReturn > 0
+                      ? `linear-gradient(to right, #00D09C 0%, #00D09C ${(expectedReturn / 30) * 100}%, #E5E7EB ${(expectedReturn / 30) * 100}%, #E5E7EB 100%)`
+                      : '#E5E7EB'
                   }}
                 />
               </div>
@@ -338,7 +374,7 @@ export default function SWPCalculator() {
                       value={timePeriod}
                       onChange={(e) => {
                         const value = parseInt(e.target.value) || 0;
-                        setTimePeriod(Math.min(30, Math.max(1, value)));
+                        setTimePeriod(Math.min(30, Math.max(0, value)));
                       }}
                       className="w-8 bg-transparent text-[#00D09C] font-semibold text-right focus:outline-none"
                     />
@@ -347,14 +383,16 @@ export default function SWPCalculator() {
                 </div>
                 <input
                   type="range"
-                  min={1}
+                  min={0}
                   max={30}
                   step={1}
                   value={timePeriod}
                   onChange={(e) => setTimePeriod(parseInt(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00D09C]"
                   style={{
-                    background: `linear-gradient(to right, #00D09C 0%, #00D09C ${((timePeriod - 1) / (30 - 1)) * 100}%, #E5E7EB ${((timePeriod - 1) / (30 - 1)) * 100}%, #E5E7EB 100%)`
+                    background: timePeriod > 0
+                      ? `linear-gradient(to right, #00D09C 0%, #00D09C ${(timePeriod / 30) * 100}%, #E5E7EB ${(timePeriod / 30) * 100}%, #E5E7EB 100%)`
+                      : '#E5E7EB'
                   }}
                 />
               </div>

@@ -162,7 +162,7 @@ export const ContactSection: React.FC = () => {
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Systematic Investments Location - Brahmand Phase 6, Thane West"
+                  title="Systematic Investments Location - Shop No. 42/E3, Brahmand Phase 6, Thane West 400607"
                   className="absolute inset-0"
                 />
                 

@@ -86,31 +86,140 @@ export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
     currentY += 18;
   };
 
-  // ========== FOOTER WITH ONLY LOGO ==========
-  const drawFooter = () => {
-    const footerY = pageHeight - 20;
+  // ========== LOAD LOGO IMAGE ==========
+  let logoImageData: string | null = null;
+  let logoWidth = 0;
+  let logoHeight = 0;
+  
+  try {
+    // Load logo image using Image element and convert to data URL via canvas
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    logoImageData = await new Promise<string | null>((resolve) => {
+      img.onload = () => {
+        try {
+          // Create canvas to convert image to data URL
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL('image/png');
+            logoWidth = 40; // Fixed width for PDF
+            logoHeight = (img.height / img.width) * logoWidth;
+            resolve(dataUrl);
+          } else {
+            resolve(null);
+          }
+        } catch (error) {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = '/images/logo.png';
+    });
+  } catch (error) {
+    // Silently fail - user wants only logo, so if it fails, show nothing
+    logoImageData = null;
+  }
 
-    // Simple divider
-    doc.setDrawColor(...COLORS.border);
-    doc.setLineWidth(0.3);
-    doc.line(margin, footerY - 8, pageWidth - margin, footerY - 8);
+  // ========== LOAD PARTNER IMAGES ==========
+  const partnerImages = [
+    '/images/partnered/hdfc.PNG',
+    '/images/partnered/LIC.PNG',
+    '/images/partnered/newindia.PNG',
+    '/images/partnered/star.PNG',
+    '/images/partnered/tata.PNG',
+  ];
 
-    // Company name centered at bottom
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.green);
-    doc.text('Systematic Investment', pageWidth / 2, footerY, { align: 'center' });
+  interface PartnerImageData {
+    data: string;
+    width: number;
+    height: number;
+  }
 
-    // Tagline
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(...COLORS.mutedText);
-    doc.text('You Can Park Your Future Here', pageWidth / 2, footerY + 5, { align: 'center' });
+  const loadPartnerImages = async (): Promise<PartnerImageData[]> => {
+    const loadedImages: PartnerImageData[] = [];
+    
+    for (const src of partnerImages) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        const imageData = await new Promise<PartnerImageData | null>((resolve) => {
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0);
+                const dataUrl = canvas.toDataURL('image/png');
+                const imgWidth = 20; // Fixed width for partner logos
+                const imgHeight = (img.height / img.width) * imgWidth;
+                resolve({ data: dataUrl, width: imgWidth, height: imgHeight });
+              } else {
+                resolve(null);
+              }
+            } catch (error) {
+              resolve(null);
+            }
+          };
+          img.onerror = () => resolve(null);
+          img.src = src;
+        });
 
-    // Contact
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.text('9821255653 / 9920735653  |  info.systematic@gmail.com  |  Thane (W)', pageWidth / 2, footerY + 10, { align: 'center' });
+        if (imageData) {
+          loadedImages.push(imageData);
+        }
+      } catch (error) {
+        // Continue loading other images
+        continue;
+      }
+    }
+
+    return loadedImages;
+  };
+
+  const partnerImagesData = await loadPartnerImages();
+
+  // ========== FOOTER WITH LOGO AND PARTNER IMAGES ==========
+  const drawFooter = (logoData: string | null, lWidth: number, lHeight: number, partners: PartnerImageData[]) => {
+    const footerY = pageHeight - 15;
+    const partnerLogoHeight = 12; // Height for partner logos
+    const spacing = 3; // Spacing between partner logos
+    const logoSpacing = 8; // Spacing between logo and partner images
+
+    // Calculate total width needed for partner images
+    const totalPartnerWidth = partners.reduce((sum, img) => sum + img.width + spacing, 0) - spacing;
+    const startX = (pageWidth - totalPartnerWidth) / 2;
+
+    // Draw partner images
+    let currentX = startX;
+    partners.forEach((partner) => {
+      try {
+        const partnerY = footerY - partnerLogoHeight - (logoData && lWidth > 0 && lHeight > 0 ? lHeight + logoSpacing : 0);
+        doc.addImage(partner.data, 'PNG', currentX, partnerY, partner.width, partner.height);
+        currentX += partner.width + spacing;
+      } catch (error) {
+        // Silently fail
+      }
+    });
+
+    // Draw company logo
+    if (logoData && lWidth > 0 && lHeight > 0) {
+      try {
+        const logoX = (pageWidth - lWidth) / 2;
+        const logoY = footerY - lHeight - (partners.length > 0 ? partnerLogoHeight + logoSpacing : 0);
+        doc.addImage(logoData, 'PNG', logoX, logoY, lWidth, lHeight);
+      } catch (error) {
+        // Silently fail
+        console.error('Error adding logo to PDF:', error);
+      }
+    }
   };
 
   // ========== START PDF ==========
@@ -328,7 +437,7 @@ export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-    drawFooter();
+    drawFooter(logoImageData, logoWidth, logoHeight, partnerImagesData);
   }
 
   // ========== SAVE ==========
