@@ -87,7 +87,7 @@ export const TeamSection: React.FC = () => {
                     <div className="relative bg-gradient-to-br from-accent/20 to-accent/5 rounded-3xl p-2">
                       <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-primary-dark">
                         <Image
-                          src="/images/founder.png"
+                          src="/images/Founder1.png"
                           alt="Vivek Bhande - Founder"
                           fill
                           className="object-cover object-top"
