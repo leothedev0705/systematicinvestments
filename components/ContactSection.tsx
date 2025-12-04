@@ -136,7 +136,7 @@ export const ContactSection: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Right Content - Map placeholder */}
+          {/* Right Content - Google Maps */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -144,7 +144,7 @@ export const ContactSection: React.FC = () => {
             className="h-full"
           >
             <div className="card-elevated h-full min-h-[400px] lg:min-h-full overflow-hidden">
-              {/* Map placeholder header */}
+              {/* Map header */}
               <div className="p-6 border-b border-card-border">
                 <h3 className="font-heading font-semibold text-primary flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-accent" />
@@ -152,47 +152,38 @@ export const ContactSection: React.FC = () => {
                 </h3>
               </div>
 
-              {/* Map placeholder content */}
-              <div className="relative h-[calc(100%-80px)] min-h-[320px] bg-navy-50">
-                {/* Grid pattern background */}
-                <div
-                  className="absolute inset-0 opacity-20"
-                  style={{
-                    backgroundImage: `linear-gradient(#0B1F3B 1px, transparent 1px), linear-gradient(90deg, #0B1F3B 1px, transparent 1px)`,
-                    backgroundSize: "30px 30px",
-                  }}
+              {/* Google Maps Embed */}
+              <div className="relative h-[calc(100%-80px)] min-h-[320px]">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3767.7699377668597!2d72.96835647520797!3d19.21574168200985!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7b90b5a6f1233%3A0x5c2e1a8bde1b4f1a!2sBrahmand%20Phase%206%2C%20Azad%20Nagar%2C%20Thane%20West%2C%20Thane%2C%20Maharashtra%20400607!5e0!3m2!1sen!2sin!4v1701701234567!5m2!1sen!2sin"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, minHeight: '320px' }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Systematic Investments Location - Brahmand Phase 6, Thane West"
+                  className="absolute inset-0"
                 />
-
-                {/* Center marker */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={isInView ? { scale: 1 } : {}}
-                    transition={{ delay: 0.5, type: "spring" }}
-                    className="relative"
+                
+                {/* Location overlay card */}
+                <div className="absolute bottom-4 left-4 right-4 z-10">
+                  <a 
+                    href="https://maps.google.com/?q=Shop+No+42/E3+Brahmand+Phase+6+Thane+West+400607"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-elevated hover:bg-white transition-colors"
                   >
-                    <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center">
-                      <div className="w-14 h-14 rounded-full bg-accent/40 flex items-center justify-center">
-                        <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center shadow-glow">
-                          <MapPin className="w-4 h-4 text-primary" />
-                        </div>
-                      </div>
-                    </div>
-                    {/* Pulse animation */}
-                    <div className="absolute inset-0 rounded-full bg-accent/30 animate-ping" />
-                  </motion.div>
-                </div>
-
-                {/* Location label */}
-                <div className="absolute bottom-6 left-6 right-6">
-                  <div className="bg-white rounded-xl p-4 shadow-elevated">
                     <p className="font-heading font-semibold text-primary mb-1">
                       Systematic Investments
                     </p>
                     <p className="text-sm text-muted">
-                      Brahmand Phase 6, Thane West, Maharashtra 400607
+                      Shop No. 42/E3, Brahmand Phase 6, Thane West 400607
                     </p>
-                  </div>
+                    <p className="text-xs text-accent mt-2 font-medium">
+                      Click to open in Google Maps →
+                    </p>
+                  </a>
                 </div>
               </div>
             </div>

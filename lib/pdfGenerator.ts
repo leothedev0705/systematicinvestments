@@ -57,79 +57,13 @@ export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 15;
-  let currentY = 0;
-
-  // ========== SIMPLE CLEAN HEADER ==========
-  const drawLetterhead = () => {
-    // Clean green header bar
-    doc.setFillColor(...COLORS.green);
-    doc.rect(0, 0, pageWidth, 28, 'F');
-    
-    // Company name
-    doc.setTextColor(...COLORS.white);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.text('Systematic Investment', margin, 14);
-    
-    // Tagline
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'italic');
-    doc.text('You Can Park Your Future Here', margin, 22);
-    
-    // Contact on right
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    const rightX = pageWidth - margin;
-    doc.text('9821255653 / 9920735653', rightX, 12, { align: 'right' });
-    doc.text('info.systematic@gmail.com', rightX, 18, { align: 'right' });
-    doc.text('Thane (W), 400607', rightX, 24, { align: 'right' });
-    
-    currentY = 38;
-  };
-
-  // ========== FOOTER ==========
-  const drawFooter = (pageNum: number, totalPages: number) => {
-    const footerY = pageHeight - 15;
-
-    // Divider line
-    doc.setDrawColor(...COLORS.green);
-    doc.setLineWidth(0.5);
-    doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
-
-    // Generation timestamp
-    doc.setFontSize(7);
-    doc.setTextColor(...COLORS.mutedText);
-    doc.setFont('helvetica', 'normal');
-    const date = new Date().toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-    doc.text(`Report Generated: ${date}`, margin, footerY);
-
-    // Page number
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, footerY, { align: 'right' });
-
-    // Disclaimer
-    doc.setFontSize(6);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(130, 130, 130);
-    doc.text(
-      'This report is for informational purposes only. Consult a financial advisor for personalized advice.',
-      pageWidth / 2,
-      footerY + 5,
-      { align: 'center' }
-    );
-  };
+  let currentY = 20;
 
   // ========== PAGE BREAK CHECK ==========
   const checkPageBreak = (requiredSpace: number) => {
-    if (currentY + requiredSpace > pageHeight - 25) {
+    if (currentY + requiredSpace > pageHeight - 35) {
       doc.addPage();
-      currentY = 15;
+      currentY = 20;
       return true;
     }
     return false;
@@ -152,27 +86,63 @@ export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
     currentY += 18;
   };
 
+  // ========== FOOTER WITH ONLY LOGO ==========
+  const drawFooter = () => {
+    const footerY = pageHeight - 20;
+
+    // Simple divider
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.line(margin, footerY - 8, pageWidth - margin, footerY - 8);
+
+    // Company name centered at bottom
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...COLORS.green);
+    doc.text('Systematic Investment', pageWidth / 2, footerY, { align: 'center' });
+
+    // Tagline
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(...COLORS.mutedText);
+    doc.text('You Can Park Your Future Here', pageWidth / 2, footerY + 5, { align: 'center' });
+
+    // Contact
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('9821255653 / 9920735653  |  info.systematic@gmail.com  |  Thane (W)', pageWidth / 2, footerY + 10, { align: 'center' });
+  };
+
   // ========== START PDF ==========
-  drawLetterhead();
 
   // Report Title
   doc.setTextColor(...COLORS.darkText);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
+  doc.setFontSize(18);
   doc.text(config.calculatorName, margin, currentY);
   
   // Subtitle
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(...COLORS.mutedText);
-  doc.text('Financial Planning Report', margin, currentY + 6);
+  doc.text('Financial Planning Report', margin, currentY + 7);
   
   // Green underline
   doc.setDrawColor(...COLORS.green);
   doc.setLineWidth(1.5);
-  doc.line(margin, currentY + 10, margin + 55, currentY + 10);
+  doc.line(margin, currentY + 11, margin + 60, currentY + 11);
   
-  currentY += 20;
+  // Date on right
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.mutedText);
+  const date = new Date().toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  doc.text(date, pageWidth - margin, currentY + 4, { align: 'right' });
+  
+  currentY += 25;
 
   // ========== YOUR INPUTS SECTION ==========
   drawSectionHeader('Your Inputs', COLORS.green);
@@ -354,34 +324,11 @@ export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
     });
   }
 
-  // ========== CTA SECTION ==========
-  checkPageBreak(45);
-  currentY += 5;
-
-  // CTA Box
-  doc.setFillColor(...COLORS.green);
-  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 35, 5, 5, 'F');
-
-  // CTA Text
-  doc.setTextColor(...COLORS.white);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text('Need Help Planning Your Financial Future?', pageWidth / 2, currentY + 12, { align: 'center' });
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text('Book a FREE consultation with our certified financial experts', pageWidth / 2, currentY + 20, { align: 'center' });
-
-  doc.setTextColor(...COLORS.goldLight);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text('Call: 9821255653 / 9920735653  |  Email: info.systematic@gmail.com', pageWidth / 2, currentY + 29, { align: 'center' });
-
-  // ========== DRAW FOOTERS ==========
+  // ========== DRAW FOOTER ON ALL PAGES ==========
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-    drawFooter(i, totalPages);
+    drawFooter();
   }
 
   // ========== SAVE ==========
