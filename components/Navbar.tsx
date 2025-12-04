@@ -14,9 +14,10 @@ const navLinks = [
   { name: "Recognitions", href: "#recognitions" },
   { name: "Process", href: "#process" },
   { name: "Team", href: "#team" },
-  { name: "Testimonials", href: "#testimonials" },
   { name: "Contact", href: "#contact" },
 ];
+
+const toolsLink = { name: "Tools", href: "/tools", isExternal: true };
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -84,6 +85,12 @@ export const Navbar: React.FC = () => {
                   {link.name}
                 </button>
               ))}
+              <Link
+                href={toolsLink.href}
+                className="px-3 py-2 text-sm font-medium text-accent hover:text-accent-dark transition-colors rounded-lg hover:bg-accent/10"
+              >
+                {toolsLink.name}
+              </Link>
             </div>
 
             {/* CTA Button */}
@@ -138,6 +145,16 @@ export const Navbar: React.FC = () => {
                     {link.name}
                   </motion.button>
                 ))}
+                <Link href="/tools" onClick={() => setIsMobileMenuOpen(false)}>
+                  <motion.span
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: navLinks.length * 0.05 }}
+                    className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
+                  >
+                    📊 Financial Tools
+                  </motion.span>
+                </Link>
                 <Link href="/book-review" className="w-full mt-2">
                   <motion.span
                     initial={{ opacity: 0, x: -20 }}
