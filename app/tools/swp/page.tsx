@@ -3,7 +3,25 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Download, Calculator, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Download, 
+  Calculator, 
+  Info, 
+  ChevronDown, 
+  ChevronUp,
+  Copy,
+  Share2,
+  Mail,
+  Printer,
+  MessageCircle,
+  Linkedin,
+  Twitter,
+  Facebook,
+  Check,
+  Link as LinkIcon,
+  ExternalLink
+} from "lucide-react";
 import { generateCalculatorPDF, formatCurrencyPDF, type PDFConfig } from "@/lib/pdfGenerator";
 
 // Format currency in Indian format
@@ -31,6 +49,73 @@ export default function SWPCalculator() {
   // UI State
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showFAQ, setShowFAQ] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
+  // Get current URL for sharing
+  const getShareUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.href;
+    }
+    return 'https://systematicinvestments.in/tools/swp';
+  };
+
+  // Copy link to clipboard
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getShareUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Share functions
+  const shareOnWhatsApp = () => {
+    const text = `Check out this SWP Calculator! Calculate your systematic withdrawals easily.\n\nMy Results:\n• Investment: ₹${formatNumber(totalInvestment)}\n• Monthly Withdrawal: ₹${formatNumber(withdrawalPerMonth)}\n• Total Withdrawn: ₹${formatNumber(results.totalWithdrawal)}\n• Final Value: ₹${formatNumber(results.finalValue)}\n\n`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text + getShareUrl())}`, '_blank');
+  };
+
+  const shareOnTwitter = () => {
+    const text = `I just calculated my SWP returns! ₹${formatNumber(totalInvestment)} investment with ₹${formatNumber(withdrawalPerMonth)}/month withdrawal. Try it yourself:`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(getShareUrl())}`, '_blank');
+  };
+
+  const shareOnLinkedIn = () => {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(getShareUrl())}`, '_blank');
+  };
+
+  const shareOnFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl())}`, '_blank');
+  };
+
+  const shareViaEmail = () => {
+    const subject = 'SWP Calculator - Plan Your Systematic Withdrawals';
+    const body = `Hi,\n\nI found this useful SWP Calculator that helps plan systematic withdrawals from your investments.\n\nMy Calculation Results:\n• Total Investment: ₹${formatNumber(totalInvestment)}\n• Monthly Withdrawal: ₹${formatNumber(withdrawalPerMonth)}\n• Expected Return: ${expectedReturn}%\n• Time Period: ${timePeriod} years\n• Total Withdrawn: ₹${formatNumber(results.totalWithdrawal)}\n• Final Value: ₹${formatNumber(results.finalValue)}\n\nTry it yourself: ${getShareUrl()}\n\nBest regards`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const printPage = () => {
+    window.print();
+  };
+
+  // Native share if available
+  const nativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'SWP Calculator - Systematic Investments',
+          text: `Calculate your systematic withdrawals! Investment: ₹${formatNumber(totalInvestment)}, Monthly Withdrawal: ₹${formatNumber(withdrawalPerMonth)}`,
+          url: getShareUrl(),
+        });
+      } catch (err) {
+        console.log('Share cancelled');
+      }
+    } else {
+      setShareOpen(!shareOpen);
+    }
+  };
 
   // Calculate SWP results
   const results = useMemo(() => {
@@ -464,6 +549,142 @@ export default function SWPCalculator() {
               </Link>
             </motion.div>
 
+            {/* Quick Links - Share & Actions */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35 }}
+              className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <LinkIcon className="w-5 h-5 text-[#00D09C]" />
+                <h3 className="font-bold text-gray-900">Quick Links</h3>
+              </div>
+
+              {/* Copy Link */}
+              <button
+                onClick={copyLink}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-left group"
+              >
+                {copied ? (
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <Check className="w-4 h-4 text-green-600" />
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-[#E8F5F1] flex items-center justify-center transition-colors">
+                    <Copy className="w-4 h-4 text-gray-500 group-hover:text-[#00D09C]" />
+                  </div>
+                )}
+                <span className={`font-medium ${copied ? 'text-green-600' : 'text-gray-700'}`}>
+                  {copied ? 'Link Copied!' : 'Copy Calculator Link'}
+                </span>
+              </button>
+
+              {/* Share Button */}
+              <div className="relative">
+                <button
+                  onClick={nativeShare}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-left group"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-[#E8F5F1] flex items-center justify-center transition-colors">
+                    <Share2 className="w-4 h-4 text-gray-500 group-hover:text-[#00D09C]" />
+                  </div>
+                  <span className="font-medium text-gray-700">Share Calculator</span>
+                </button>
+
+                {/* Share Dropdown */}
+                {shareOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-10"
+                  >
+                    <div className="grid grid-cols-4 gap-2">
+                      <button
+                        onClick={shareOnWhatsApp}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-green-50 transition-colors"
+                        title="Share on WhatsApp"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                          <MessageCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-xs text-gray-600">WhatsApp</span>
+                      </button>
+                      <button
+                        onClick={shareOnTwitter}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                        title="Share on Twitter"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
+                          <Twitter className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-xs text-gray-600">Twitter</span>
+                      </button>
+                      <button
+                        onClick={shareOnLinkedIn}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                        title="Share on LinkedIn"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-[#0A66C2] flex items-center justify-center">
+                          <Linkedin className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-xs text-gray-600">LinkedIn</span>
+                      </button>
+                      <button
+                        onClick={shareOnFacebook}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                        title="Share on Facebook"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-[#1877F2] flex items-center justify-center">
+                          <Facebook className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-xs text-gray-600">Facebook</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Email */}
+              <button
+                onClick={shareViaEmail}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-left group"
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-[#E8F5F1] flex items-center justify-center transition-colors">
+                  <Mail className="w-4 h-4 text-gray-500 group-hover:text-[#00D09C]" />
+                </div>
+                <span className="font-medium text-gray-700">Email Results</span>
+              </button>
+
+              {/* Print */}
+              <button
+                onClick={printPage}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-left group"
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-[#E8F5F1] flex items-center justify-center transition-colors">
+                  <Printer className="w-4 h-4 text-gray-500 group-hover:text-[#00D09C]" />
+                </div>
+                <span className="font-medium text-gray-700">Print Page</span>
+              </button>
+
+              {/* Download PDF */}
+              <button
+                onClick={handleDownloadPDF}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-left group"
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-[#E8F5F1] flex items-center justify-center transition-colors">
+                  <Download className="w-4 h-4 text-gray-500 group-hover:text-[#00D09C]" />
+                </div>
+                <span className="font-medium text-gray-700">Download PDF Report</span>
+              </button>
+
+              <div className="border-t border-gray-100 mt-3 pt-3">
+                <p className="text-xs text-gray-500 text-center">
+                  Share this calculator with friends & family
+                </p>
+              </div>
+            </motion.div>
+
             {/* Popular Calculators */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -484,9 +705,10 @@ export default function SWPCalculator() {
                   <Link
                     key={calc.name}
                     href={calc.href}
-                    className="block text-gray-600 hover:text-[#00D09C] transition-colors"
+                    className="flex items-center gap-2 text-gray-600 hover:text-[#00D09C] transition-colors group"
                   >
-                    {calc.name}
+                    <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span>{calc.name}</span>
                   </Link>
                 ))}
               </div>
