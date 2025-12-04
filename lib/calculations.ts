@@ -106,50 +106,86 @@ export function calculateEMI(
 
 /**
  * Calculate SWP (Systematic Withdrawal Plan)
+ * 
+ * Formulas used:
+ * 1. Monthly Growth Rate: mg = (1 + r/100)^(1/12) - 1
+ * 2. SWP Amount Per Month: SWP(m) = S₀ × (1 + i/100)^(floor((m-1)/12))
+ * 3. Balance Before Growth: B¹ = Initial, Bᵐ = Aᵐ⁻¹ - SWP(m)
+ * 4. Balance After Growth: Aᵐ = Bᵐ × (1 + mg)
+ * 5. Final Amount = Aᵀ
+ * 6. Total Withdrawals = Σ SWP(m) for m = 1 to T
  */
 export function calculateSWP(
   corpus: number,
   monthlyWithdrawal: number,
   annualReturn: number,
-  inflationAdjustment: number = 0
-): { monthsLasting: number; totalWithdrawn: number; monthlyBreakdown: SWPBreakdown[] } {
-  const monthlyRate = annualReturn / 100 / 12;
-  let remainingCorpus = corpus;
-  let currentWithdrawal = monthlyWithdrawal;
+  annualSWPIncrease: number = 0
+): { monthsLasting: number; totalWithdrawn: number; monthlyBreakdown: SWPBreakdown[]; finalAmount: number } {
+  // 1. Monthly Growth Rate: mg = (1 + r/100)^(1/12) - 1
+  const monthlyGrowthRate = Math.pow(1 + annualReturn / 100, 1 / 12) - 1;
+  
+  const S0 = monthlyWithdrawal; // Base monthly SWP
+  const i = annualSWPIncrease;  // Annual SWP increase percentage
+  
+  let balanceAfterGrowth = corpus; // A⁰ = Initial Investment (for calculation purposes)
   let totalWithdrawn = 0;
   let months = 0;
   const monthlyBreakdown: SWPBreakdown[] = [];
   const maxMonths = 600; // 50 years cap
 
-  while (remainingCorpus > 0 && months < maxMonths) {
-    // Apply returns first
-    remainingCorpus *= (1 + monthlyRate);
-    
-    // Withdraw
-    const actualWithdrawal = Math.min(currentWithdrawal, remainingCorpus);
-    remainingCorpus -= actualWithdrawal;
-    totalWithdrawn += actualWithdrawal;
+  while (months < maxMonths) {
     months++;
-
-    if (months % 12 === 0 || remainingCorpus <= 0 || months <= 12) {
+    
+    // 2. SWP Amount Per Month: SWP(m) = S₀ × (1 + i/100)^(floor((m-1)/12))
+    const yearIndex = Math.floor((months - 1) / 12);
+    const currentSWP = S0 * Math.pow(1 + i / 100, yearIndex);
+    
+    // 3. Balance Before Growth: Bᵐ = Aᵐ⁻¹ - SWP(m)
+    // For month 1: B¹ = Initial_Investment, but we need to withdraw first
+    const balanceBeforeGrowth = balanceAfterGrowth - currentSWP;
+    
+    // If balance before growth goes negative, corpus is exhausted
+    if (balanceBeforeGrowth < 0) {
+      // Record partial withdrawal
+      const actualWithdrawal = balanceAfterGrowth;
+      totalWithdrawn += actualWithdrawal;
       monthlyBreakdown.push({
         month: months,
         withdrawal: Math.round(actualWithdrawal),
-        remainingCorpus: Math.round(remainingCorpus),
+        remainingCorpus: 0,
+        totalWithdrawn: Math.round(totalWithdrawn),
+      });
+      break;
+    }
+    
+    // 4. Balance After Growth: Aᵐ = Bᵐ × (1 + mg)
+    balanceAfterGrowth = balanceBeforeGrowth * (1 + monthlyGrowthRate);
+    totalWithdrawn += currentSWP;
+    
+    // Record breakdown for key months (first 12, then yearly, or when exhausted)
+    if (months <= 12 || months % 12 === 0 || balanceAfterGrowth <= currentSWP) {
+      monthlyBreakdown.push({
+        month: months,
+        withdrawal: Math.round(currentSWP),
+        remainingCorpus: Math.round(balanceAfterGrowth),
         totalWithdrawn: Math.round(totalWithdrawn),
       });
     }
-
-    // Apply inflation adjustment annually
-    if (inflationAdjustment > 0 && months % 12 === 0) {
-      currentWithdrawal *= (1 + inflationAdjustment / 100);
+    
+    // Check if corpus will be exhausted next month
+    if (balanceAfterGrowth <= 0) {
+      break;
     }
   }
+
+  // 5. Final Amount = Aᵀ (balance after growth in final month)
+  const finalAmount = Math.max(0, Math.round(balanceAfterGrowth));
 
   return {
     monthsLasting: months,
     totalWithdrawn: Math.round(totalWithdrawn),
     monthlyBreakdown,
+    finalAmount,
   };
 }
 

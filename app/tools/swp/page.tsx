@@ -37,13 +37,14 @@ export default function SWPCalculator() {
       effectiveWithdrawal = monthlyWithdrawal * 3;
     }
     
-    const inflation = isAdvanced && inflationAdjustment ? inflationRate : 0;
+    // Annual SWP increase (inflation adjustment)
+    const annualSWPIncrease = isAdvanced && inflationAdjustment ? inflationRate : 0;
     
     const swpResult = calculateSWP(
       investmentAmount,
       effectiveWithdrawal,
       expectedReturn,
-      inflation
+      annualSWPIncrease
     );
     
     // Calculate years and months
@@ -69,6 +70,7 @@ export default function SWPCalculator() {
       netWithdrawn: swpResult.totalWithdrawn - taxAmount,
       monthlyBreakdown: swpResult.monthlyBreakdown,
       willLastForever: swpResult.monthsLasting >= 600,
+      finalAmount: swpResult.finalAmount,
     };
   }, [investmentAmount, monthlyWithdrawal, expectedReturn, withdrawalFrequency, inflationAdjustment, inflationRate, stepUpWithdrawal, considerTax, isAdvanced]);
 
@@ -108,7 +110,8 @@ export default function SWPCalculator() {
       { label: "Corpus Duration", value: results.willLastForever ? "Forever (Sustainable)" : `${results.yearsLasting} years ${results.remainingMonths} months`, highlight: true },
       { label: "Total Withdrawals", value: formatCurrencyPDF(results.totalWithdrawn) },
       { label: "Initial Corpus", value: formatCurrencyPDF(investmentAmount) },
-      { label: "Total Months", value: `${results.monthsLasting}+` },
+      { label: "Final Amount (Remaining)", value: formatCurrencyPDF(results.finalAmount) },
+      { label: "Total Months", value: `${results.monthsLasting}` },
       ...(isAdvanced && considerTax && results.taxAmount > 0 ? [
         { label: "Estimated LTCG Tax", value: formatCurrencyPDF(results.taxAmount) },
         { label: "Net Withdrawals After Tax", value: formatCurrencyPDF(results.netWithdrawn) },
@@ -131,7 +134,9 @@ export default function SWPCalculator() {
         ? `Your corpus is sustainable indefinitely! Your returns exceed your withdrawals.`
         : `Your corpus of ${formatCurrencyPDF(investmentAmount)} will last for ${results.yearsLasting} years and ${results.remainingMonths} months.`,
       `You can withdraw a total of ${formatCurrencyPDF(results.totalWithdrawn)} over the corpus lifetime.`,
-      `Safe withdrawal rate: To make corpus last forever, withdraw max ${formatCurrencyPDF(Math.round(investmentAmount * expectedReturn / 100 / 12))}/month.`,
+      results.finalAmount > 0 
+        ? `Final remaining amount after ${results.monthsLasting} months: ${formatCurrencyPDF(results.finalAmount)}`
+        : `Corpus will be fully exhausted.`,
       `Current withdrawal rate: ${((monthlyWithdrawal * 12 / investmentAmount) * 100).toFixed(2)}% per year.`,
     ],
   };
@@ -190,9 +195,11 @@ export default function SWPCalculator() {
               color="text-green-600"
             />
             <ResultCard
-              label={withdrawalFrequency === "monthly" ? "Monthly Withdrawal" : "Quarterly Withdrawal"}
-              value={formatCurrency(results.effectiveWithdrawal)}
+              label="Final Amount (Remaining)"
+              value={formatCurrency(results.finalAmount)}
+              subValue={results.finalAmount > 0 ? "After all withdrawals" : "Corpus exhausted"}
               icon={<Wallet className="w-5 h-5" />}
+              color={results.finalAmount > 0 ? "text-accent" : "text-red-500"}
             />
             <ResultCard
               label="Initial Corpus"
@@ -201,8 +208,8 @@ export default function SWPCalculator() {
             />
             <ResultCard
               label="Total Months"
-              value={`${results.monthsLasting}+`}
-              subValue={results.willLastForever ? "Sustainable" : "Until exhausted"}
+              value={`${results.monthsLasting}`}
+              subValue={results.willLastForever ? "Sustainable" : `${results.yearsLasting}y ${results.remainingMonths}m`}
               icon={<Clock className="w-5 h-5" />}
             />
           </div>

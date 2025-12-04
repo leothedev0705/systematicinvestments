@@ -164,11 +164,14 @@ Remember: You are not just providing information - you are building trust and gu
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, apiKey } = await request.json();
+    const { messages, apiKey: clientApiKey } = await request.json();
+
+    // Use server-side API key from environment, fallback to client-provided key
+    const apiKey = process.env.OPENAI_API_KEY || clientApiKey;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: "OpenAI API key is required" },
+        { error: "OpenAI API key is not configured. Please contact the administrator." },
         { status: 400 }
       );
     }

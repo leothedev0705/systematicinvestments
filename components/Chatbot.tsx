@@ -39,21 +39,23 @@ const quickQuestions = [
 export const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState("server"); // Default to "server" - API key is on server
   const [tempApiKey, setTempApiKey] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [useServerKey, setUseServerKey] = useState(true); // Server has the API key
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load API key from localStorage on mount
+  // Check for custom API key in localStorage (optional override)
   useEffect(() => {
     const savedKey = localStorage.getItem("sifi_api_key");
     if (savedKey) {
       setApiKey(savedKey);
       setTempApiKey(savedKey);
+      setUseServerKey(false);
     }
   }, []);
 
@@ -64,22 +66,23 @@ export const Chatbot: React.FC = () => {
 
   // Focus input when chat opens
   useEffect(() => {
-    if (isOpen && apiKey && !showSettings) {
+    if (isOpen && !showSettings) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen, apiKey, showSettings]);
+  }, [isOpen, showSettings]);
 
   const saveApiKey = () => {
     if (tempApiKey.trim()) {
       setApiKey(tempApiKey.trim());
       localStorage.setItem("sifi_api_key", tempApiKey.trim());
+      setUseServerKey(false);
       setShowSettings(false);
       setError(null);
     }
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || !apiKey) return;
+    if (!content.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -102,7 +105,8 @@ export const Chatbot: React.FC = () => {
             role: m.role,
             content: m.content,
           })),
-          apiKey,
+          // Only send client API key if user has set one (not using server key)
+          apiKey: useServerKey ? null : apiKey,
         }),
       });
 
@@ -269,7 +273,7 @@ export const Chatbot: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <Key className="w-4 h-4 text-primary" />
                       <span className="text-sm font-medium text-primary">
-                        OpenAI API Key
+                        Custom API Key (Optional)
                       </span>
                     </div>
                     <div className="flex gap-2">
@@ -277,7 +281,7 @@ export const Chatbot: React.FC = () => {
                         type="password"
                         value={tempApiKey}
                         onChange={(e) => setTempApiKey(e.target.value)}
-                        placeholder="sk-..."
+                        placeholder="sk-... (leave empty to use default)"
                         className="flex-1 px-3 py-2 text-sm rounded-lg border border-card-border bg-white focus:outline-none focus:ring-2 focus:ring-accent/50"
                       />
                       <button
@@ -289,8 +293,24 @@ export const Chatbot: React.FC = () => {
                       </button>
                     </div>
                     <p className="text-xs text-muted mt-2">
-                      Your API key is stored locally and never sent to our servers.
+                      {useServerKey 
+                        ? "✓ Using Systematic Investments' AI service. Add your own key for unlimited usage."
+                        : "Using your custom API key. Clear to use default."}
                     </p>
+                    {!useServerKey && (
+                      <button
+                        onClick={() => {
+                          localStorage.removeItem("sifi_api_key");
+                          setApiKey("server");
+                          setTempApiKey("");
+                          setUseServerKey(true);
+                          setShowSettings(false);
+                        }}
+                        className="text-xs text-accent hover:underline mt-2"
+                      >
+                        Reset to default
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -298,29 +318,8 @@ export const Chatbot: React.FC = () => {
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {/* API Key Required Message */}
-              {!apiKey && !showSettings && (
-                <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                  <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
-                    <Key className="w-8 h-8 text-accent" />
-                  </div>
-                  <h4 className="font-heading font-semibold text-primary mb-2">
-                    API Key Required
-                  </h4>
-                  <p className="text-sm text-muted mb-4">
-                    To start chatting with SIFI, please add your OpenAI API key in settings.
-                  </p>
-                  <button
-                    onClick={() => setShowSettings(true)}
-                    className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-light transition-colors"
-                  >
-                    Add API Key
-                  </button>
-                </div>
-              )}
-
               {/* Welcome Message */}
-              {apiKey && messages.length === 0 && (
+              {messages.length === 0 && (
                 <div className="space-y-4">
                   <div className="flex gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
@@ -438,34 +437,32 @@ export const Chatbot: React.FC = () => {
             </div>
 
             {/* Input Area */}
-            {apiKey && (
-              <div className="p-4 border-t border-card-border bg-background/50">
-                <form onSubmit={handleSubmit} className="flex gap-2">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Ask me anything about finance..."
-                    disabled={isLoading}
-                    className="flex-1 px-4 py-3 rounded-xl border border-card-border bg-white focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent text-sm disabled:opacity-50"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!inputValue.trim() || isLoading}
-                    className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </form>
-                <p className="text-[10px] text-center text-muted mt-2">
-                  SIFI by Systematic Investments • For personalized advice, call{" "}
-                  <a href="tel:+919821255653" className="text-accent hover:underline">
-                    +91 98212 55653
-                  </a>
-                </p>
-              </div>
-            )}
+            <div className="p-4 border-t border-card-border bg-background/50">
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Ask me anything about finance..."
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-3 rounded-xl border border-card-border bg-white focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent text-sm disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={!inputValue.trim() || isLoading}
+                  className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </form>
+              <p className="text-[10px] text-center text-muted mt-2">
+                SIFI by Systematic Investments • For personalized advice, call{" "}
+                <a href="tel:+919821255653" className="text-accent hover:underline">
+                  +91 98212 55653
+                </a>
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
