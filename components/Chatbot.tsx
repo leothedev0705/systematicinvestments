@@ -53,14 +53,14 @@ export const Chatbot: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
-  const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Check for speech support
+  // Check for speech support (microphone access)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      setSpeechSupported(!!SpeechRecognition);
+    if (typeof window !== 'undefined' && navigator.mediaDevices) {
+      setSpeechSupported(true);
     }
   }, []);
 
@@ -87,8 +87,8 @@ export const Chatbot: React.FC = () => {
   // Cleanup speech on unmount
   useEffect(() => {
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
       }
       if (audioRef.current) {
         audioRef.current.pause();
@@ -97,45 +97,67 @@ export const Chatbot: React.FC = () => {
     };
   }, []);
 
-  // Speech Recognition setup
-  const startListening = () => {
+  // Speech Recognition using OpenAI Whisper
+  const startListening = async () => {
     if (!speechSupported) return;
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.continuous = false;
-    recognitionRef.current.interimResults = true;
-    recognitionRef.current.lang = 'en-IN';
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-    recognitionRef.current.onstart = () => {
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+        
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          await transcribeAudio(audioBlob);
+        }
+      };
+
+      mediaRecorder.start();
       setIsListening(true);
-    };
-
-    recognitionRef.current.onresult = (event: any) => {
-      const transcript = Array.from(event.results)
-        .map((result: any) => result[0])
-        .map((result: any) => result.transcript)
-        .join('');
-      setInputValue(transcript);
-    };
-
-    recognitionRef.current.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
+    } catch (error) {
+      console.error('Microphone access error:', error);
       setIsListening(false);
-    };
-
-    recognitionRef.current.onend = () => {
-      setIsListening(false);
-    };
-
-    recognitionRef.current.start();
+    }
   };
 
   const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
     }
     setIsListening(false);
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+
+      const response = await fetch('/api/whisper', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.text) {
+          setInputValue(data.text);
+        }
+      } else {
+        console.error('Whisper transcription failed');
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+    }
   };
 
   // Text to Speech using OpenAI TTS
