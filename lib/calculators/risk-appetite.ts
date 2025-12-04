@@ -14,14 +14,7 @@ export interface RiskResult {
     gold: number;
     cash: number;
   };
-  recommendations: string[];
   products: string[];
-  categoryScores: {
-    category: string;
-    score: number;
-    maxScore: number;
-    percentage: number;
-  }[];
 }
 
 // Get age-based score
@@ -37,27 +30,14 @@ function getAgeScore(age: number): number {
 export function calculateRiskProfile(answers: Record<number, any>): RiskResult {
   let totalScore = 0;
   let maxScore = 0;
-  const categoryScoresMap: Record<string, { score: number; maxScore: number }> = {};
 
   riskQuestions.forEach(question => {
     const answer = answers[question.id];
-    
-    // Initialize category if not exists
-    if (!categoryScoresMap[question.category]) {
-      categoryScoresMap[question.category] = { score: 0, maxScore: 0 };
-    }
 
     if (answer !== undefined && answer !== null) {
       let questionScore = 0;
 
-      if (question.type === 'checkbox' && Array.isArray(answer)) {
-        // Sum selected scores, cap at 10
-        const sum = answer.reduce((acc: number, val: string) => {
-          const opt = question.options?.find(o => o.value === val);
-          return acc + (opt?.score || 0);
-        }, 0);
-        questionScore = Math.min(sum, 10);
-      } else if (question.type === 'slider') {
+      if (question.type === 'slider') {
         // Age-based scoring
         questionScore = getAgeScore(answer);
       } else if (question.type === 'radio') {
@@ -67,13 +47,11 @@ export function calculateRiskProfile(answers: Record<number, any>): RiskResult {
 
       const weightedScore = questionScore * question.weight;
       totalScore += weightedScore;
-      categoryScoresMap[question.category].score += weightedScore;
     }
 
     // Max possible score for this question
     const maxQuestionScore = 10 * question.weight;
     maxScore += maxQuestionScore;
-    categoryScoresMap[question.category].maxScore += maxQuestionScore;
   });
 
   const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
@@ -96,14 +74,6 @@ export function calculateRiskProfile(answers: Record<number, any>): RiskResult {
 
   const profile = riskProfiles[profileKey];
 
-  // Convert category scores to array
-  const categoryScores = Object.entries(categoryScoresMap).map(([category, data]) => ({
-    category,
-    score: data.score,
-    maxScore: data.maxScore,
-    percentage: data.maxScore > 0 ? (data.score / data.maxScore) * 100 : 0,
-  }));
-
   return {
     totalScore,
     maxPossibleScore: maxScore,
@@ -113,9 +83,7 @@ export function calculateRiskProfile(answers: Record<number, any>): RiskResult {
     profileDescription: profile.description,
     profileColor: profile.color,
     assetAllocation: profile.allocation,
-    recommendations: profile.recommendations,
     products: profile.products,
-    categoryScores,
   };
 }
 
@@ -123,7 +91,6 @@ export function calculateRiskProfile(answers: Record<number, any>): RiskResult {
 export function getAnsweredCount(answers: Record<number, any>): number {
   return Object.keys(answers).filter(key => {
     const value = answers[parseInt(key)];
-    if (Array.isArray(value)) return value.length > 0;
     return value !== undefined && value !== null && value !== '';
   }).length;
 }
@@ -132,4 +99,3 @@ export function getAnsweredCount(answers: Record<number, any>): number {
 export function isComplete(answers: Record<number, any>): boolean {
   return getAnsweredCount(answers) === riskQuestions.length;
 }
-

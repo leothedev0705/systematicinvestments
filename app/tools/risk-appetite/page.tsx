@@ -1,26 +1,16 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, AlertCircle, Shield, TrendingUp, Wallet, PieChart, RotateCcw, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Shield, Wallet, PieChart, RotateCcw, Download } from "lucide-react";
 import { riskQuestions, riskProfiles } from "@/constants/riskQuestions";
 import { calculateRiskProfile, getAnsweredCount, isComplete } from "@/lib/calculators/risk-appetite";
-import { generateCalculatorPDF, formatCurrencyPDF } from "@/lib/pdfGenerator";
+import { generateCalculatorPDF } from "@/lib/pdfGenerator";
 
 export default function RiskAppetitePage() {
   const [answers, setAnswers] = useState<Record<number, any>>({
     1: 30, // Default age
-  });
-  const [showResults, setShowResults] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    "Personal Information": true,
-    "Financial Situation": true,
-    "Investment Experience": true,
-    "Risk Behavior": true,
-    "Investment Goals": true,
-    "Past Experience": true,
-    "Final Assessment": true,
   });
 
   const answeredCount = getAnsweredCount(answers);
@@ -37,42 +27,19 @@ export default function RiskAppetitePage() {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
 
-  const toggleCheckbox = (questionId: number, value: string, checked: boolean) => {
-    setAnswers(prev => {
-      const current = prev[questionId] || [];
-      if (checked) {
-        return { ...prev, [questionId]: [...current, value] };
-      } else {
-        return { ...prev, [questionId]: current.filter((v: string) => v !== value) };
-      }
-    });
-  };
-
-  const toggleCategory = (category: string) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [category]: !prev[category]
-    }));
-  };
-
   const resetAssessment = () => {
     setAnswers({ 1: 30 });
-    setShowResults(false);
   };
 
   const handleDownloadPDF = () => {
     if (!results) return;
 
-    // Get answer labels for PDF
     const inputsForPDF = riskQuestions.map(q => {
       const answer = answers[q.id];
       let displayValue = '';
       
       if (q.type === 'slider') {
         displayValue = `${answer} ${q.unit || ''}`;
-      } else if (q.type === 'checkbox' && Array.isArray(answer)) {
-        const labels = answer.map(v => q.options?.find(o => o.value === v)?.label || v);
-        displayValue = labels.join(', ') || 'None selected';
       } else {
         const option = q.options?.find(o => o.value === answer);
         displayValue = option?.label || String(answer || 'Not answered');
@@ -99,22 +66,11 @@ export default function RiskAppetitePage() {
     });
   };
 
-  // Group questions by category
-  const questionsByCategory = riskQuestions.reduce((acc, question) => {
-    if (!acc[question.category]) {
-      acc[question.category] = [];
-    }
-    acc[question.category].push(question);
-    return acc;
-  }, {} as Record<string, typeof riskQuestions>);
-
-  const categories = Object.keys(questionsByCategory);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link 
               href="/tools" 
@@ -157,7 +113,7 @@ export default function RiskAppetitePage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -171,175 +127,98 @@ export default function RiskAppetitePage() {
             Risk Appetite Assessment
           </h1>
           <p className="text-slate-600 max-w-xl mx-auto">
-            Answer these 20 questions to discover your investment risk profile and get personalized asset allocation recommendations.
+            Answer these {totalQuestions} questions to discover your investment risk profile and get personalized recommendations.
           </p>
         </motion.div>
 
-        {/* Questions by Category */}
+        {/* Questions */}
         <div className="space-y-6">
-          {categories.map((category, catIndex) => (
-            <motion.div
-              key={category}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: catIndex * 0.1 }}
-              className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm"
-            >
-              {/* Category Header */}
-              <button
-                onClick={() => toggleCategory(category)}
-                className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+          {riskQuestions.map((question, index) => {
+            const isAnswered = answers[question.id] !== undefined;
+            
+            return (
+              <motion.div
+                key={question.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className={`bg-white rounded-2xl border p-6 transition-all ${
+                  isAnswered 
+                    ? 'border-green-200 shadow-sm' 
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-navy-700 text-white flex items-center justify-center text-sm font-bold">
-                    {catIndex + 1}
-                  </div>
-                  <h2 className="text-lg font-semibold text-navy-700">{category}</h2>
-                  <span className="text-sm text-slate-500">
-                    ({questionsByCategory[category].length} questions)
+                <div className="flex items-start gap-4">
+                  <span className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                    isAnswered 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {isAnswered ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
                   </span>
-                </div>
-                {expandedCategories[category] ? (
-                  <ChevronUp className="w-5 h-5 text-slate-500" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-slate-500" />
-                )}
-              </button>
+                  
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-navy-700 mb-4">
+                      {question.question}
+                    </h3>
 
-              {/* Questions */}
-              <AnimatePresence>
-                {expandedCategories[category] && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="p-4 space-y-6">
-                      {questionsByCategory[category].map((question, qIndex) => {
-                        const isAnswered = answers[question.id] !== undefined && 
-                          (Array.isArray(answers[question.id]) ? answers[question.id].length > 0 : true);
-                        
-                        return (
-                          <div
-                            key={question.id}
-                            className={`p-4 rounded-xl border transition-all ${
-                              isAnswered 
-                                ? 'border-green-200 bg-green-50/50' 
-                                : 'border-slate-200 bg-white hover:border-slate-300'
+                    {/* Slider Input */}
+                    {question.type === 'slider' && (
+                      <div className="space-y-3">
+                        <input
+                          type="range"
+                          min={question.min}
+                          max={question.max}
+                          value={answers[question.id] || question.default}
+                          onChange={(e) => setAnswer(question.id, parseInt(e.target.value))}
+                          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-accent"
+                        />
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-500">{question.min} {question.unit}</span>
+                          <span className="font-bold text-navy-700 text-xl bg-accent/10 px-4 py-1 rounded-full">
+                            {answers[question.id] || question.default} {question.unit}
+                          </span>
+                          <span className="text-slate-500">{question.max} {question.unit}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Radio Input */}
+                    {question.type === 'radio' && (
+                      <div className="space-y-2">
+                        {question.options?.map((option) => (
+                          <label
+                            key={option.value}
+                            className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
+                              answers[question.id] === option.value
+                                ? 'border-accent bg-accent/10 shadow-sm'
+                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                             }`}
                           >
-                            <div className="flex items-start gap-4">
-                              <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                                isAnswered 
-                                  ? 'bg-green-500 text-white' 
-                                  : 'bg-slate-200 text-slate-600'
-                              }`}>
-                                {isAnswered ? <CheckCircle2 className="w-5 h-5" /> : question.id}
-                              </span>
-                              
-                              <div className="flex-1">
-                                <h3 className="text-base font-semibold text-navy-700 mb-4">
-                                  {question.question}
-                                </h3>
-
-                                {/* Slider Input */}
-                                {question.type === 'slider' && (
-                                  <div className="space-y-3">
-                                    <input
-                                      type="range"
-                                      min={question.min}
-                                      max={question.max}
-                                      value={answers[question.id] || question.default}
-                                      onChange={(e) => setAnswer(question.id, parseInt(e.target.value))}
-                                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-accent"
-                                    />
-                                    <div className="flex justify-between text-sm">
-                                      <span className="text-slate-500">{question.min} {question.unit}</span>
-                                      <span className="font-bold text-navy-700 text-lg">
-                                        {answers[question.id] || question.default} {question.unit}
-                                      </span>
-                                      <span className="text-slate-500">{question.max} {question.unit}</span>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Radio Input */}
-                                {question.type === 'radio' && (
-                                  <div className="space-y-2">
-                                    {question.options?.map((option) => (
-                                      <label
-                                        key={option.value}
-                                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                                          answers[question.id] === option.value
-                                            ? 'border-accent bg-accent/10'
-                                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                                        }`}
-                                      >
-                                        <input
-                                          type="radio"
-                                          name={`question-${question.id}`}
-                                          value={option.value}
-                                          checked={answers[question.id] === option.value}
-                                          onChange={() => setAnswer(question.id, option.value)}
-                                          className="w-4 h-4 text-accent focus:ring-accent"
-                                        />
-                                        <span className={`text-sm ${
-                                          answers[question.id] === option.value
-                                            ? 'font-medium text-navy-700'
-                                            : 'text-slate-700'
-                                        }`}>
-                                          {option.label}
-                                        </span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Checkbox Input */}
-                                {question.type === 'checkbox' && (
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {question.options?.map((option) => {
-                                      const isChecked = answers[question.id]?.includes(option.value);
-                                      return (
-                                        <label
-                                          key={option.value}
-                                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                                            isChecked
-                                              ? 'border-accent bg-accent/10'
-                                              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                                          }`}
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            checked={isChecked}
-                                            onChange={(e) => toggleCheckbox(question.id, option.value, e.target.checked)}
-                                            className="w-4 h-4 text-accent rounded focus:ring-accent"
-                                          />
-                                          <span className={`text-sm ${
-                                            isChecked
-                                              ? 'font-medium text-navy-700'
-                                              : 'text-slate-700'
-                                          }`}>
-                                            {option.label}
-                                          </span>
-                                        </label>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
+                            <input
+                              type="radio"
+                              name={`question-${question.id}`}
+                              value={option.value}
+                              checked={answers[question.id] === option.value}
+                              onChange={() => setAnswer(question.id, option.value)}
+                              className="w-4 h-4 text-accent focus:ring-accent"
+                            />
+                            <span className={`${
+                              answers[question.id] === option.value
+                                ? 'font-medium text-navy-700'
+                                : 'text-slate-700'
+                            }`}>
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Results Section */}
@@ -347,7 +226,7 @@ export default function RiskAppetitePage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-8"
+            className="mt-10"
           >
             <div className="bg-gradient-to-br from-navy-700 to-navy-900 rounded-3xl p-8 text-white">
               <div className="text-center mb-8">
@@ -359,7 +238,6 @@ export default function RiskAppetitePage() {
               <div className="flex flex-col items-center mb-8">
                 <div className="relative w-48 h-24 mb-4">
                   <svg viewBox="0 0 200 100" className="w-full h-full">
-                    {/* Background arc */}
                     <path
                       d="M 10 100 A 90 90 0 0 1 190 100"
                       fill="none"
@@ -367,7 +245,6 @@ export default function RiskAppetitePage() {
                       strokeWidth="20"
                       strokeLinecap="round"
                     />
-                    {/* Colored arc */}
                     <path
                       d="M 10 100 A 90 90 0 0 1 190 100"
                       fill="none"
