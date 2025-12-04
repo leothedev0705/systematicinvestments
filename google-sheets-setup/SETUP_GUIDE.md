@@ -119,7 +119,7 @@ The script automatically creates these columns:
 - **Email Notification**: Instant email for each submission
 
 ### 📧 Email Notifications
-Each submission sends an email to `vivekbhande79@gmail.com` with:
+Each submission sends an email to `info.systematic@gmail.com` with:
 - All form details
 - Formatted sections
 - Direct link to Google Sheet
@@ -178,6 +178,6 @@ When you make changes to the script:
 ## Support
 
 If you need help with setup, contact:
-- Email: vivekbhande79@gmail.com
-- Phone: +91 98909 68995
+- Email: info.systematic@gmail.com
+- Phone: +91 82916 93953
 

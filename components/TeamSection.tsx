@@ -178,7 +178,7 @@ export const TeamSection: React.FC = () => {
                 {/* Social links */}
                 <div className="flex items-center gap-3">
                   <motion.a
-                    href="mailto:viv.bhande@gmail.com"
+                    href="mailto:info.systematic@gmail.com"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors group"

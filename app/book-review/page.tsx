@@ -598,6 +598,13 @@ export default function BookReviewPage() {
                   >
                     Call +91 98212 55653
                   </a>
+                  {" or "}
+                  <a
+                    href="tel:+918291693953"
+                    className="text-primary font-medium hover:text-accent transition-colors"
+                  >
+                    +91 82916 93953
+                  </a>
                 </p>
               </form>
             </div>

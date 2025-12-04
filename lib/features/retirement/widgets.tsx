@@ -97,17 +97,19 @@ export function CurrencyField({
   error,
 }: CurrencyFieldProps) {
   const formatDisplay = (val: number): string => {
-    if (val === 0) return '';
+    if (val === 0) return '0';
     return val.toLocaleString('en-IN');
   };
 
   const parseInput = (str: string): number => {
-    return parseFloat(str.replace(/,/g, '')) || 0;
+    const cleaned = str.replace(/,/g, '');
+    if (cleaned === '' || cleaned === '0') return 0;
+    return parseFloat(cleaned) || 0;
   };
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
         <input
@@ -166,6 +168,60 @@ export function PercentSliderField({
       <div className="flex justify-between text-xs text-gray-500">
         <span>{min}%</span>
         <span>{max}%</span>
+      </div>
+    </div>
+  );
+}
+
+interface PercentFieldWithProgressProps {
+  value: number;
+  onChange: (value: number) => void;
+  maxValue: number;
+  min?: number;
+  step?: number;
+}
+
+export function PercentFieldWithProgress({
+  value,
+  onChange,
+  maxValue,
+  min = 0,
+  step = 0.1,
+}: PercentFieldWithProgressProps) {
+  const percentage = (value / maxValue) * 100;
+  const clampedPercentage = Math.min(100, Math.max(0, percentage));
+
+  return (
+    <div className="space-y-2">
+      {/* Percentage Value */}
+      <div className="text-2xl font-bold text-blue-600">
+        {value.toFixed(1)}%
+      </div>
+      
+      {/* Progress Bar */}
+      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-blue-600 rounded-full transition-all duration-300"
+          style={{ width: `${clampedPercentage}%` }}
+        />
+      </div>
+      
+      {/* Max Value and Input */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-500">{maxValue}%</span>
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => {
+            const val = parseFloat(e.target.value) || 0;
+            const finalVal = Math.max(min, Math.min(maxValue, val));
+            onChange(finalVal);
+          }}
+          min={min}
+          max={maxValue}
+          step={step}
+          className="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </div>
     </div>
   );

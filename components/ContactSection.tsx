@@ -77,11 +77,12 @@ export const ContactSection: React.FC = () => {
                     Phone
                   </p>
                   <p className="text-sm text-muted">+91 98212 55653</p>
+                  <p className="text-sm text-muted">+91 82916 93953</p>
                 </div>
               </motion.a>
 
               <motion.a
-                href="mailto:viv.bhande@gmail.com"
+                href="mailto:info.systematic@gmail.com"
                 whileHover={{ x: 5 }}
                 className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-card border border-card-border hover:shadow-soft transition-shadow group"
               >
@@ -92,7 +93,7 @@ export const ContactSection: React.FC = () => {
                   <p className="font-heading font-semibold text-primary mb-1">
                     Email
                   </p>
-                  <p className="text-sm text-muted">viv.bhande@gmail.com</p>
+                  <p className="text-sm text-muted">info.systematic@gmail.com</p>
                 </div>
               </motion.a>
 

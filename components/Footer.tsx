@@ -100,11 +100,20 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="mailto:viv.bhande@gmail.com"
+                  href="tel:+918291693953"
+                  className="flex items-center gap-3 text-white/70 hover:text-accent transition-colors text-sm"
+                >
+                  <Phone className="w-4 h-4 text-accent" />
+                  +91 82916 93953
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:info.systematic@gmail.com"
                   className="flex items-center gap-3 text-white/70 hover:text-accent transition-colors text-sm"
                 >
                   <Mail className="w-4 h-4 text-accent" />
-                  viv.bhande@gmail.com
+                  info.systematic@gmail.com
                 </a>
               </li>
               <li>

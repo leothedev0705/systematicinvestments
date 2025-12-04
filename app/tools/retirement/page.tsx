@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { RetirementCalculatorService } from "@/lib/features/retirement/calculator_service";
 import { RetirementInputs, RetirementResult } from "@/lib/features/retirement/models";
-import { CurrencyField, PercentSliderField, KeyValueTile, SummaryStat, COLORS } from "@/lib/features/retirement/widgets";
+import { CurrencyField, PercentSliderField, PercentFieldWithProgress, KeyValueTile, SummaryStat, COLORS } from "@/lib/features/retirement/widgets";
 import { formatCurrency } from "@/lib/utils/formatCurrency";
 import { formatCurrencyPDF, generateCalculatorPDF, type PDFConfig } from "@/lib/pdfGenerator";
 import { LineChart } from "@/components/calculators/Charts";
@@ -423,15 +423,15 @@ function SimplifiedForm(props: SimplifiedFormProps) {
       className="bg-white rounded-2xl shadow-lg p-6 space-y-6"
     >
       {/* Natural Language Inputs */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <p className="text-gray-700 mb-2">I am currently</p>
             <input
               type="number"
               value={props.presentAge || ''}
-              onChange={(e) => props.setPresentAge(parseInt(e.target.value) || 30)}
-              min={18}
+              onChange={(e) => props.setPresentAge(parseInt(e.target.value) || 0)}
+              min={0}
               max={70}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg"
             />
@@ -442,8 +442,8 @@ function SimplifiedForm(props: SimplifiedFormProps) {
             <input
               type="number"
               value={props.retireAge || ''}
-              onChange={(e) => props.setRetireAge(parseInt(e.target.value) || 60)}
-              min={(props.presentAge || 30) + 1}
+              onChange={(e) => props.setRetireAge(parseInt(e.target.value) || 0)}
+              min={0}
               max={75}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg"
             />
@@ -456,19 +456,18 @@ function SimplifiedForm(props: SimplifiedFormProps) {
             label=""
             value={props.monthlyExpense}
             onChange={props.setMonthlyExpense}
-            min={10000}
+            min={0}
           />
           <p className="text-sm text-gray-500 mt-1">per month on expenses</p>
         </div>
 
         <div>
           <p className="text-gray-700 mb-2">I expect my savings to grow by</p>
-          <PercentSliderField
-            label=""
+          <PercentFieldWithProgress
             value={props.savingsIncrease}
             onChange={props.setSavingsIncrease}
-            min={6}
-            max={20}
+            maxValue={20}
+            min={0}
           />
           <p className="text-sm text-gray-500 mt-1">per year</p>
         </div>
@@ -482,32 +481,37 @@ function SimplifiedForm(props: SimplifiedFormProps) {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Step-up Type</label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => props.setStepUpType('%')}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  props.stepUpType === '%' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                Percentage (%)
-              </button>
-              <button
-                onClick={() => props.setStepUpType('₹')}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  props.stepUpType === '₹' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                Absolute (₹)
-              </button>
-            </div>
+            <p className="text-gray-700 mb-2">Step-up Type</p>
+            <select
+              value={props.stepUpType}
+              onChange={(e) => props.setStepUpType(e.target.value as '%' | '₹')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="%">Percentage (%)</option>
+              <option value="₹">Absolute (₹)</option>
+            </select>
           </div>
-          <CurrencyField
-            label={props.stepUpType === '%' ? 'Step-up Percentage' : 'Step-up Amount'}
-            value={props.stepUpAmount}
-            onChange={props.setStepUpAmount}
-            min={0}
-          />
+          {props.stepUpType === '%' ? (
+            <div>
+              <p className="text-gray-700 mb-2">Step-up Percentage</p>
+              <PercentFieldWithProgress
+                value={props.stepUpAmount}
+                onChange={props.setStepUpAmount}
+                maxValue={20}
+                min={0}
+              />
+            </div>
+          ) : (
+            <div>
+              <p className="text-gray-700 mb-2">Step-up Amount</p>
+              <CurrencyField
+                label=""
+                value={props.stepUpAmount}
+                onChange={props.setStepUpAmount}
+                min={0}
+              />
+            </div>
+          )}
         </div>
       </PremiumCollapsibleSection>
 
@@ -518,19 +522,24 @@ function SimplifiedForm(props: SimplifiedFormProps) {
         onToggle={() => props.setShowExistingInvestmentSection(!props.showExistingInvestmentSection)}
       >
         <div className="space-y-4">
-          <CurrencyField
-            label="Current Retirement Savings"
-            value={props.existingInvestment}
-            onChange={props.setExistingInvestment}
-            min={0}
-          />
-          <PercentSliderField
-            label="Expected Return on Existing"
-            value={props.existingReturn}
-            onChange={props.setExistingReturn}
-            min={4}
-            max={20}
-          />
+          <div>
+            <p className="text-gray-700 mb-2">Current Retirement Savings</p>
+            <CurrencyField
+              label=""
+              value={props.existingInvestment}
+              onChange={props.setExistingInvestment}
+              min={0}
+            />
+          </div>
+          <div>
+            <p className="text-gray-700 mb-2">Expected Return on Existing</p>
+            <PercentFieldWithProgress
+              value={props.existingReturn}
+              onChange={props.setExistingReturn}
+              maxValue={20}
+              min={0}
+            />
+          </div>
         </div>
       </PremiumCollapsibleSection>
 
@@ -540,39 +549,45 @@ function SimplifiedForm(props: SimplifiedFormProps) {
         isOpen={props.showAssumptionsSection}
         onToggle={() => props.setShowAssumptionsSection(!props.showAssumptionsSection)}
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Life Expectancy</label>
+            <p className="text-gray-700 mb-2">Life Expectancy</p>
             <input
               type="number"
               value={props.lifeExpectancy}
-              onChange={(e) => props.setLifeExpectancy(parseInt(e.target.value) || 85)}
-              min={70}
+              onChange={(e) => props.setLifeExpectancy(parseInt(e.target.value) || 0)}
+              min={0}
               max={100}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg"
             />
           </div>
-          <PercentSliderField
-            label="Pre-retirement Inflation"
-            value={props.preRetInflation}
-            onChange={props.setPreRetInflation}
-            min={3}
-            max={10}
-          />
-          <PercentSliderField
-            label="Post-retirement Inflation"
-            value={props.postRetInflation}
-            onChange={props.setPostRetInflation}
-            min={3}
-            max={10}
-          />
-          <PercentSliderField
-            label="Post-retirement Return"
-            value={props.postRetReturn}
-            onChange={props.setPostRetReturn}
-            min={4}
-            max={12}
-          />
+          <div>
+            <p className="text-gray-700 mb-2">Pre-retirement Inflation</p>
+            <PercentFieldWithProgress
+              value={props.preRetInflation}
+              onChange={props.setPreRetInflation}
+              maxValue={10}
+              min={0}
+            />
+          </div>
+          <div>
+            <p className="text-gray-700 mb-2">Post-retirement Inflation</p>
+            <PercentFieldWithProgress
+              value={props.postRetInflation}
+              onChange={props.setPostRetInflation}
+              maxValue={10}
+              min={0}
+            />
+          </div>
+          <div>
+            <p className="text-gray-700 mb-2">Post-retirement Return</p>
+            <PercentFieldWithProgress
+              value={props.postRetReturn}
+              onChange={props.setPostRetReturn}
+              maxValue={12}
+              min={0}
+            />
+          </div>
         </div>
       </PremiumCollapsibleSection>
     </motion.div>
@@ -647,13 +662,13 @@ function AdvancedForm(props: AdvancedFormProps) {
           label="Monthly Expense Today"
           value={props.monthlyExpenseToday}
           onChange={props.setMonthlyExpenseToday}
-          min={10000}
+          min={0}
         />
         <PercentSliderField
           label="Pre-retirement Return"
           value={props.preRetReturn}
           onChange={props.setPreRetReturn}
-          min={6}
+          min={0}
           max={20}
         />
       </div>
@@ -680,21 +695,21 @@ function AdvancedForm(props: AdvancedFormProps) {
             label="Inflation Rate"
             value={props.inflation}
             onChange={props.setInflation}
-            min={3}
+            min={0}
             max={10}
           />
           <PercentSliderField
             label="Post-retirement Inflation"
             value={props.postRetInflation}
             onChange={props.setPostRetInflation}
-            min={3}
+            min={0}
             max={10}
           />
           <PercentSliderField
             label="Post-retirement Return"
             value={props.postRetReturn}
             onChange={props.setPostRetReturn}
-            min={4}
+            min={0}
             max={12}
           />
         </div>
@@ -717,7 +732,7 @@ function AdvancedForm(props: AdvancedFormProps) {
             label="Expected Return on Existing"
             value={props.existingReturn}
             onChange={props.setExistingReturn}
-            min={4}
+            min={0}
             max={20}
           />
         </div>

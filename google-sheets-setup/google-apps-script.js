@@ -145,7 +145,7 @@ function doGet(e) {
  */
 function sendEmailNotification(data) {
   // Email recipient - Change to your email
-  const NOTIFICATION_EMAIL = 'vivekbhande79@gmail.com';
+  const NOTIFICATION_EMAIL = 'info.systematic@gmail.com';
   
   const subject = `🔔 New Portfolio Review Request - ${data.fullName}`;
   
@@ -255,7 +255,7 @@ Systematic Investments
     `;
     
     MailApp.sendEmail({
-      to: 'vivekbhande79@gmail.com',
+      to: 'info.systematic@gmail.com',
       subject: subject,
       body: body,
     });
