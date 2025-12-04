@@ -63,7 +63,7 @@ export default function RiskAppetitePage() {
         { label: 'Recommended Cash', value: `${results.assetAllocation.cash}%` },
         { label: 'Suggested Products', value: results.products.join(', ') },
       ],
-    });
+    }).catch(console.error);
   };
 
   return (

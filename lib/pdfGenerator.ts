@@ -1,17 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// Company details for letterhead
-const COMPANY = {
-  name: "Systematic Investments",
-  tagline: "Where Growth Meets Stability",
-  address: "Shri Ram Tower, Near Ginger Hotel, Wakad, Pune - 411057",
-  phone: "+91 98909 68995",
-  email: "vivekbhande79@gmail.com",
-  website: "www.systematicinvestments.in",
-  established: "Est. 1996",
-};
-
 // Premium color palette
 const COLORS = {
   navy: [10, 37, 64] as [number, number, number],
@@ -25,6 +14,7 @@ const COLORS = {
   success: [34, 197, 94] as [number, number, number],
   border: [226, 232, 240] as [number, number, number],
   cream: [255, 251, 240] as [number, number, number],
+  green: [0, 128, 0] as [number, number, number],
 };
 
 export interface PDFInputField {
@@ -57,7 +47,24 @@ export interface PDFConfig {
   chartImage?: string;
 }
 
-export function generateCalculatorPDF(config: PDFConfig): void {
+// Convert image URL to base64
+async function getImageAsBase64(url: string): Promise<string> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error loading image:', error);
+    return '';
+  }
+}
+
+export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -69,66 +76,50 @@ export function generateCalculatorPDF(config: PDFConfig): void {
   const margin = 15;
   let currentY = 0;
 
-  // ========== PREMIUM LETTERHEAD ==========
+  // Try to load the letterhead image
+  let letterheadImage: string | null = null;
+  try {
+    letterheadImage = await getImageAsBase64('/images/letterhead.png');
+  } catch (error) {
+    console.log('Letterhead image not found, using text-based header');
+  }
+
+  // ========== LETTERHEAD WITH IMAGE ==========
   const drawLetterhead = () => {
-    // Navy header bar with gradient effect
-    doc.setFillColor(...COLORS.navy);
-    doc.rect(0, 0, pageWidth, 42, 'F');
-    
-    // Subtle pattern overlay
-    doc.setFillColor(255, 255, 255);
-    doc.setGState(new (doc as any).GState({ opacity: 0.03 }));
-    for (let i = 0; i < pageWidth; i += 8) {
-      doc.circle(i, 21, 15, 'F');
+    if (letterheadImage) {
+      // Add letterhead image - it spans the full width at top
+      // The image aspect ratio from your letterhead: approximately 8.5:1.5 (wide header)
+      const imgWidth = pageWidth;
+      const imgHeight = 35; // Adjust based on your letterhead proportions
+      
+      doc.addImage(letterheadImage, 'PNG', 0, 0, imgWidth, imgHeight);
+      currentY = imgHeight + 8;
+    } else {
+      // Fallback text-based header
+      doc.setFillColor(...COLORS.green);
+      doc.rect(0, 0, pageWidth, 25, 'F');
+      
+      doc.setTextColor(...COLORS.white);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('Systematic Investment', margin, 15);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.text('You Can Park Your Future Here', margin, 22);
+      
+      currentY = 35;
     }
-    doc.setGState(new (doc as any).GState({ opacity: 1 }));
-
-    // Gold accent stripe
-    doc.setFillColor(...COLORS.gold);
-    doc.rect(0, 42, pageWidth, 3, 'F');
-
-    // Company name
-    doc.setTextColor(...COLORS.white);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
-    doc.text(COMPANY.name, margin, 18);
-
-    // Tagline with gold color
-    doc.setTextColor(...COLORS.gold);
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(10);
-    doc.text(COMPANY.tagline, margin, 27);
-
-    // Established badge
-    doc.setTextColor(200, 200, 200);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text(COMPANY.established, margin, 36);
-
-    // Contact details (right aligned)
-    doc.setTextColor(200, 200, 200);
-    doc.setFontSize(8);
-    const rightX = pageWidth - margin;
-    doc.text(COMPANY.phone, rightX, 16, { align: 'right' });
-    doc.text(COMPANY.email, rightX, 23, { align: 'right' });
-    doc.text(COMPANY.website, rightX, 30, { align: 'right' });
-    doc.text(COMPANY.address.split(',')[0], rightX, 37, { align: 'right' });
-
-    currentY = 55;
   };
 
-  // ========== PREMIUM FOOTER ==========
+  // ========== FOOTER ==========
   const drawFooter = (pageNum: number, totalPages: number) => {
-    const footerY = pageHeight - 20;
+    const footerY = pageHeight - 15;
 
-    // Footer background
-    doc.setFillColor(...COLORS.lightBg);
-    doc.rect(0, footerY - 5, pageWidth, 25, 'F');
-
-    // Gold line
-    doc.setDrawColor(...COLORS.gold);
-    doc.setLineWidth(0.8);
-    doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
+    // Divider line
+    doc.setDrawColor(...COLORS.green);
+    doc.setLineWidth(0.5);
+    doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
 
     // Generation timestamp
     doc.setFontSize(7);
@@ -141,11 +132,11 @@ export function generateCalculatorPDF(config: PDFConfig): void {
       hour: '2-digit',
       minute: '2-digit',
     });
-    doc.text(`Report Generated: ${date}`, margin, footerY + 4);
+    doc.text(`Report Generated: ${date}`, margin, footerY);
 
     // Page number
     doc.setFont('helvetica', 'bold');
-    doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, footerY + 4, { align: 'right' });
+    doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, footerY, { align: 'right' });
 
     // Disclaimer
     doc.setFontSize(6);
@@ -154,23 +145,23 @@ export function generateCalculatorPDF(config: PDFConfig): void {
     doc.text(
       'This report is for informational purposes only. Consult a financial advisor for personalized advice.',
       pageWidth / 2,
-      footerY + 10,
+      footerY + 5,
       { align: 'center' }
     );
   };
 
   // ========== PAGE BREAK CHECK ==========
   const checkPageBreak = (requiredSpace: number) => {
-    if (currentY + requiredSpace > pageHeight - 30) {
+    if (currentY + requiredSpace > pageHeight - 25) {
       doc.addPage();
-      currentY = 20;
+      currentY = 15;
       return true;
     }
     return false;
   };
 
   // ========== DRAW SECTION HEADER ==========
-  const drawSectionHeader = (title: string, accentColor: [number, number, number] = COLORS.navy) => {
+  const drawSectionHeader = (title: string, accentColor: [number, number, number] = COLORS.green) => {
     checkPageBreak(20);
     
     // Accent bar
@@ -178,7 +169,7 @@ export function generateCalculatorPDF(config: PDFConfig): void {
     doc.roundedRect(margin, currentY, 4, 12, 2, 2, 'F');
     
     // Title
-    doc.setTextColor(...COLORS.navy);
+    doc.setTextColor(...COLORS.darkText);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text(title, margin + 8, currentY + 8);
@@ -189,10 +180,10 @@ export function generateCalculatorPDF(config: PDFConfig): void {
   // ========== START PDF ==========
   drawLetterhead();
 
-  // Report Title with decorative element
-  doc.setTextColor(...COLORS.navy);
+  // Report Title
+  doc.setTextColor(...COLORS.darkText);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.text(config.calculatorName, margin, currentY);
   
   // Subtitle
@@ -201,15 +192,15 @@ export function generateCalculatorPDF(config: PDFConfig): void {
   doc.setTextColor(...COLORS.mutedText);
   doc.text('Financial Planning Report', margin, currentY + 6);
   
-  // Gold underline
-  doc.setDrawColor(...COLORS.gold);
+  // Green underline
+  doc.setDrawColor(...COLORS.green);
   doc.setLineWidth(1.5);
-  doc.line(margin, currentY + 10, margin + 60, currentY + 10);
+  doc.line(margin, currentY + 10, margin + 55, currentY + 10);
   
   currentY += 20;
 
   // ========== YOUR INPUTS SECTION ==========
-  drawSectionHeader('Your Inputs', COLORS.navy);
+  drawSectionHeader('Your Inputs', COLORS.green);
 
   // Input cards in 2-column grid
   const colWidth = (pageWidth - margin * 2 - 10) / 2;
@@ -224,14 +215,14 @@ export function generateCalculatorPDF(config: PDFConfig): void {
       rowStartY = currentY;
     }
 
-    // Card background with shadow effect
+    // Card background
     doc.setFillColor(...COLORS.white);
     doc.setDrawColor(...COLORS.border);
     doc.setLineWidth(0.5);
     doc.roundedRect(x, rowStartY, colWidth, 18, 3, 3, 'FD');
     
-    // Left accent bar
-    doc.setFillColor(...COLORS.gold);
+    // Left accent bar (green)
+    doc.setFillColor(...COLORS.green);
     doc.roundedRect(x, rowStartY, 3, 18, 3, 0, 'F');
     doc.rect(x + 1.5, rowStartY, 1.5, 18, 'F');
 
@@ -241,8 +232,8 @@ export function generateCalculatorPDF(config: PDFConfig): void {
     doc.setFontSize(8);
     doc.text(input.label, x + 8, rowStartY + 6);
 
-    // Value (bold, prominent)
-    doc.setTextColor(...COLORS.navy);
+    // Value
+    doc.setTextColor(...COLORS.darkText);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     const displayValue = input.unit ? `${input.value}${input.unit}` : String(input.value);
@@ -255,7 +246,6 @@ export function generateCalculatorPDF(config: PDFConfig): void {
     }
   });
 
-  // Handle odd number of inputs
   if (col !== 0) {
     currentY = rowStartY + 22;
   }
@@ -267,25 +257,23 @@ export function generateCalculatorPDF(config: PDFConfig): void {
   // Find highlighted result
   const highlightedResult = config.results.find(r => r.highlight);
   
-  // Premium highlight box for main result
   if (highlightedResult) {
-    // Outer glow effect
+    // Highlighted result box
     doc.setFillColor(...COLORS.goldLight);
-    doc.roundedRect(margin - 2, currentY - 2, pageWidth - margin * 2 + 4, 38, 6, 6, 'F');
+    doc.roundedRect(margin - 2, currentY - 2, pageWidth - margin * 2 + 4, 36, 6, 6, 'F');
     
-    // Main box
     doc.setFillColor(...COLORS.cream);
     doc.setDrawColor(...COLORS.gold);
     doc.setLineWidth(2);
-    doc.roundedRect(margin, currentY, pageWidth - margin * 2, 34, 4, 4, 'FD');
+    doc.roundedRect(margin, currentY, pageWidth - margin * 2, 32, 4, 4, 'FD');
 
-    // Icon/decoration
+    // Rs icon
     doc.setFillColor(...COLORS.gold);
-    doc.circle(margin + 12, currentY + 17, 6, 'F');
+    doc.circle(margin + 12, currentY + 16, 6, 'F');
     doc.setTextColor(...COLORS.white);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text('Rs', margin + 12, currentY + 19, { align: 'center' });
+    doc.text('Rs', margin + 12, currentY + 18, { align: 'center' });
 
     // Label
     doc.setTextColor(...COLORS.mutedText);
@@ -293,24 +281,23 @@ export function generateCalculatorPDF(config: PDFConfig): void {
     doc.setFontSize(9);
     doc.text(highlightedResult.label, margin + 25, currentY + 10);
 
-    // Value (large, bold)
-    doc.setTextColor(...COLORS.navy);
+    // Value
+    doc.setTextColor(...COLORS.darkText);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(24);
-    doc.text(String(highlightedResult.value), margin + 25, currentY + 24);
+    doc.setFontSize(22);
+    doc.text(String(highlightedResult.value), margin + 25, currentY + 23);
 
-    // Subvalue if exists
     if (highlightedResult.subValue) {
       doc.setTextColor(...COLORS.mutedText);
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(9);
-      doc.text(highlightedResult.subValue, margin + 25, currentY + 31);
+      doc.text(highlightedResult.subValue, margin + 25, currentY + 29);
     }
 
-    currentY += 42;
+    currentY += 40;
   }
 
-  // Other results in table
+  // Other results table
   const resultsData = config.results
     .filter(r => !r.highlight)
     .map(result => [
@@ -331,7 +318,7 @@ export function generateCalculatorPDF(config: PDFConfig): void {
         lineWidth: 0.3,
       },
       headStyles: {
-        fillColor: COLORS.navy,
+        fillColor: COLORS.green,
         textColor: COLORS.white,
         fontStyle: 'bold',
         fontSize: 10,
@@ -351,16 +338,15 @@ export function generateCalculatorPDF(config: PDFConfig): void {
     currentY = (doc as any).lastAutoTable.finalY + 15;
   }
 
-  // ========== DATA TABLES (if any) ==========
+  // ========== DATA TABLES ==========
   if (config.tables && config.tables.length > 0) {
     config.tables.forEach(table => {
       checkPageBreak(50);
 
-      // Table title
       if (table.title) {
-        doc.setFillColor(...COLORS.navyLight);
+        doc.setFillColor(...COLORS.green);
         doc.roundedRect(margin, currentY, 4, 10, 2, 2, 'F');
-        doc.setTextColor(...COLORS.navy);
+        doc.setTextColor(...COLORS.darkText);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
         doc.text(table.title, margin + 8, currentY + 7);
@@ -379,7 +365,7 @@ export function generateCalculatorPDF(config: PDFConfig): void {
           lineWidth: 0.2,
         },
         headStyles: {
-          fillColor: COLORS.navy,
+          fillColor: COLORS.green,
           textColor: COLORS.white,
           fontStyle: 'bold',
           fontSize: 8,
@@ -393,43 +379,30 @@ export function generateCalculatorPDF(config: PDFConfig): void {
     });
   }
 
-  // ========== PREMIUM CTA SECTION ==========
-  checkPageBreak(50);
+  // ========== CTA SECTION ==========
+  checkPageBreak(45);
   currentY += 5;
 
-  // CTA Background
-  doc.setFillColor(...COLORS.navy);
-  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 40, 5, 5, 'F');
-
-  // Gold top accent
-  doc.setFillColor(...COLORS.gold);
-  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 4, 5, 5, 'F');
-  doc.setFillColor(...COLORS.navy);
-  doc.rect(margin, currentY + 3, pageWidth - margin * 2, 2, 'F');
-
-  // Decorative circles
-  doc.setFillColor(255, 255, 255);
-  doc.setGState(new (doc as any).GState({ opacity: 0.05 }));
-  doc.circle(pageWidth - margin - 20, currentY + 20, 25, 'F');
-  doc.circle(margin + 15, currentY + 35, 20, 'F');
-  doc.setGState(new (doc as any).GState({ opacity: 1 }));
+  // CTA Box
+  doc.setFillColor(...COLORS.green);
+  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 35, 5, 5, 'F');
 
   // CTA Text
   doc.setTextColor(...COLORS.white);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text('Need Help Planning Your Financial Future?', pageWidth / 2, currentY + 16, { align: 'center' });
+  doc.setFontSize(12);
+  doc.text('Need Help Planning Your Financial Future?', pageWidth / 2, currentY + 12, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text('Book a FREE consultation with our certified financial experts', pageWidth / 2, currentY + 24, { align: 'center' });
+  doc.text('Book a FREE consultation with our certified financial experts', pageWidth / 2, currentY + 20, { align: 'center' });
 
-  doc.setTextColor(...COLORS.gold);
+  doc.setTextColor(...COLORS.goldLight);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text(`Call: ${COMPANY.phone}  |  Email: ${COMPANY.email}`, pageWidth / 2, currentY + 34, { align: 'center' });
+  doc.setFontSize(10);
+  doc.text('Call: 9821255653 / 9920735653  |  Email: info.systematic@gmail.com', pageWidth / 2, currentY + 29, { align: 'center' });
 
-  // ========== DRAW FOOTERS ON ALL PAGES ==========
+  // ========== DRAW FOOTERS ==========
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
@@ -441,7 +414,7 @@ export function generateCalculatorPDF(config: PDFConfig): void {
   doc.save(fileName);
 }
 
-// Currency formatter for PDFs - Uses "Rs." for reliable rendering
+// Currency formatter
 export function formatCurrencyPDF(amount: number): string {
   if (amount >= 10000000) {
     return `Rs. ${(amount / 10000000).toFixed(2)} Cr`;

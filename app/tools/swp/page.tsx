@@ -191,7 +191,7 @@ export default function SWPCalculator() {
         },
       ],
     };
-    generateCalculatorPDF(pdfConfig);
+    generateCalculatorPDF(pdfConfig).catch(console.error);
   };
 
   return (

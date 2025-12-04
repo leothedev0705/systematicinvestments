@@ -90,7 +90,7 @@ export const CalculatorLayout: React.FC<CalculatorLayoutProps> = ({
         ...pdfConfig,
       };
       
-      generateCalculatorPDF(fullConfig);
+      await generateCalculatorPDF(fullConfig);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
