@@ -10,6 +10,7 @@ import { ProcessSection } from "@/components/ProcessSection";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { TeamSection } from "@/components/TeamSection";
 import { ContactSection } from "@/components/ContactSection";
+import PartnersCarousel from "@/components/PartnersCarousel";
 import { Footer } from "@/components/Footer";
 
 export default function Home() {
@@ -27,6 +28,7 @@ export default function Home() {
       <TestimonialsSection />
       <TeamSection />
       <ContactSection />
+      <PartnersCarousel />
       <Footer />
     </main>
   );
