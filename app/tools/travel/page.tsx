@@ -12,6 +12,7 @@ import {
 } from "@/components/calculators/CalculatorLayout";
 import { PieChart } from "@/components/calculators/Charts";
 import { calculateTravelBudget, formatCurrency, type TravelCosts } from "@/lib/calculations";
+import { formatCurrencyPDF, type PDFConfig } from "@/lib/pdfGenerator";
 import { motion } from "framer-motion";
 
 export default function TravelCalculator() {
@@ -93,6 +94,53 @@ export default function TravelCalculator() {
     "Comfortable Walking Shoes",
   ];
 
+  // PDF Configuration
+  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
+    inputs: [
+      { label: "Destination", value: destination === "domestic" ? "Domestic (India)" : "International" },
+      { label: "Number of Travelers", value: travelers },
+      { label: "Trip Duration", value: duration, unit: " days" },
+      ...(isAdvanced ? [
+        { label: "Flights", value: `₹${flights.toLocaleString('en-IN')}` },
+        { label: "Hotels", value: `₹${hotels.toLocaleString('en-IN')}` },
+        { label: "Food (per day)", value: `₹${food.toLocaleString('en-IN')}` },
+        { label: "Activities", value: `₹${activities.toLocaleString('en-IN')}` },
+        ...(destination === "international" ? [
+          { label: "Visa Fees", value: `₹${visa.toLocaleString('en-IN')}` },
+          { label: "Travel Insurance", value: `₹${insurance.toLocaleString('en-IN')}` },
+        ] : []),
+        { label: "Miscellaneous", value: `₹${miscellaneous.toLocaleString('en-IN')}` },
+        { label: "Months Until Trip", value: monthsUntilTrip },
+      ] : [
+        { label: "Total Budget", value: `₹${totalBudget.toLocaleString('en-IN')}` },
+      ]),
+    ],
+    results: [
+      { label: "Total Trip Cost", value: formatCurrencyPDF(results.totalCost), highlight: true },
+      { label: "Per Person Cost", value: formatCurrencyPDF(results.perPersonCost) },
+      { label: "Monthly Savings Needed", value: formatCurrencyPDF(results.monthlyRequired), subValue: isAdvanced ? `for ${monthsUntilTrip} months` : "for 6 months" },
+      { label: "Daily Budget", value: formatCurrencyPDF(Math.round(results.totalCost / duration)) },
+      { label: "Per Person Per Day", value: formatCurrencyPDF(Math.round(results.totalCost / duration / travelers)) },
+    ],
+    tables: [
+      {
+        title: "Cost Breakdown",
+        headers: ["Category", "Amount", "Percentage"],
+        rows: results.costBreakdown.map(item => [
+          item.category,
+          formatCurrencyPDF(item.amount),
+          `${item.percentage}%`,
+        ]),
+      },
+    ],
+    insights: [
+      `Your ${destination === "domestic" ? "domestic" : "international"} trip will cost approximately ${formatCurrencyPDF(results.totalCost)} for ${travelers} travelers.`,
+      `That's ${formatCurrencyPDF(results.perPersonCost)} per person for ${duration} days.`,
+      `Save ${formatCurrencyPDF(results.monthlyRequired)} monthly to fund your trip in ${isAdvanced ? monthsUntilTrip : 6} months.`,
+      `Daily budget: ${formatCurrencyPDF(Math.round(results.totalCost / duration))} (${formatCurrencyPDF(Math.round(results.totalCost / duration / travelers))} per person).`,
+    ],
+  };
+
   return (
     <CalculatorLayout
       title="Travel Budget Calculator"
@@ -110,6 +158,7 @@ export default function TravelCalculator() {
         { name: "Vacation Calculator", href: "/tools/vacation" },
         { name: "SIP Calculator", href: "/tools/sip" },
       ]}
+      pdfConfig={pdfConfig}
       results={
         <div className="space-y-6">
           {/* Total Cost Summary */}

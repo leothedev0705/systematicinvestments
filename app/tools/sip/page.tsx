@@ -12,6 +12,7 @@ import {
 } from "@/components/calculators/CalculatorLayout";
 import { LineChart, DataTable } from "@/components/calculators/Charts";
 import { calculateSIPFutureValue, formatCurrency } from "@/lib/calculations";
+import { formatCurrencyPDF, type PDFConfig } from "@/lib/pdfGenerator";
 
 export default function SIPCalculator() {
   const [isAdvanced, setIsAdvanced] = useState(false);
@@ -79,6 +80,50 @@ export default function SIPCalculator() {
     { key: "returns", header: "Returns", align: "right" as const, format: (v: number) => formatCurrency(v) },
   ];
 
+  // PDF Configuration
+  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
+    inputs: [
+      { label: "Monthly SIP Amount", value: `₹${monthlySIP.toLocaleString('en-IN')}` },
+      { label: "Investment Period", value: years, unit: " years" },
+      { label: "Expected Return", value: expectedReturn, unit: "% p.a." },
+      ...(isAdvanced ? [
+        { label: "Annual Step-up", value: annualStepUp, unit: "%" },
+        { label: "Lumpsum Addition", value: `₹${lumpsumAddition.toLocaleString('en-IN')}` },
+        { label: "Expense Ratio", value: expenseRatio, unit: "%" },
+        { label: "LTCG Tax Calculation", value: calculateTax ? "Yes" : "No" },
+      ] : []),
+    ],
+    results: [
+      { label: "Future Value", value: formatCurrencyPDF(results.futureValue), highlight: true },
+      { label: "Total Invested", value: formatCurrencyPDF(results.totalInvested) },
+      { label: "Wealth Gained", value: formatCurrencyPDF(results.wealthGained), subValue: `${((results.wealthGained / results.totalInvested) * 100).toFixed(1)}% return` },
+      { label: "CAGR", value: `${results.cagr}%`, subValue: "Compound Annual Growth Rate" },
+      ...(isAdvanced && calculateTax && results.taxAmount > 0 ? [
+        { label: "LTCG Tax (Estimated)", value: formatCurrencyPDF(results.taxAmount) },
+        { label: "Net Value After Tax", value: formatCurrencyPDF(results.netValue) },
+      ] : []),
+    ],
+    tables: [
+      {
+        title: "Year-wise Investment Breakdown",
+        headers: ["Year", "SIP/Month", "Total Invested", "Portfolio Value", "Returns"],
+        rows: results.yearlyBreakdown.map(row => [
+          row.year,
+          `₹${row.sipAmount.toLocaleString('en-IN')}`,
+          formatCurrencyPDF(row.invested),
+          formatCurrencyPDF(row.value),
+          formatCurrencyPDF(row.returns),
+        ]),
+      },
+    ],
+    insights: [
+      `Your monthly SIP of ₹${monthlySIP.toLocaleString('en-IN')} will grow to ${formatCurrencyPDF(results.futureValue)} in ${years} years.`,
+      `You will invest a total of ${formatCurrencyPDF(results.totalInvested)} and gain ${formatCurrencyPDF(results.wealthGained)} in returns.`,
+      `This represents a ${((results.wealthGained / results.totalInvested) * 100).toFixed(1)}% absolute return on your investment.`,
+      isAdvanced && annualStepUp > 0 ? `With ${annualStepUp}% annual step-up, your final year SIP will be ₹${results.yearlyBreakdown[results.yearlyBreakdown.length - 1]?.sipAmount.toLocaleString('en-IN')}/month.` : '',
+    ].filter(Boolean) as string[],
+  };
+
   return (
     <CalculatorLayout
       title="SIP Calculator"
@@ -98,6 +143,7 @@ export default function SIPCalculator() {
         { name: "Retirement Calculator", href: "/tools/retirement" },
         { name: "Child Education Calculator", href: "/tools/education" },
       ]}
+      pdfConfig={pdfConfig}
       results={
         <div className="space-y-6">
           {/* Key metrics */}

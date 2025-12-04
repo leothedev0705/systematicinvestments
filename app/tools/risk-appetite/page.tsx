@@ -12,6 +12,7 @@ import {
 } from "@/components/calculators/CalculatorLayout";
 import { GaugeChart, PieChart } from "@/components/calculators/Charts";
 import { calculateRiskProfile, type RiskAssessmentAnswers } from "@/lib/calculations";
+import { type PDFConfig } from "@/lib/pdfGenerator";
 import { motion } from "framer-motion";
 
 const riskToleranceOptions = [
@@ -129,6 +130,36 @@ export default function RiskAppetiteCalculator() {
     { label: "Gold", value: results.allocation.gold, color: "#EAB308" },
   ];
 
+  // PDF Configuration
+  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
+    inputs: [
+      { label: "Age", value: age, unit: " years" },
+      { label: "Investment Horizon", value: investmentHorizon, unit: " years" },
+      { label: "Risk Tolerance", value: riskToleranceOptions.find(o => o.value === riskTolerance)?.label || "" },
+      ...(isAdvanced ? [
+        { label: "Annual Income", value: `₹${annualIncome.toLocaleString('en-IN')}` },
+        { label: "Monthly Expenses", value: `₹${monthlyExpenses.toLocaleString('en-IN')}` },
+        { label: "Existing Investments", value: `₹${existingInvestments.toLocaleString('en-IN')}` },
+        { label: "Financial Dependents", value: financialDependents },
+        { label: "Income Stability", value: incomeStabilityOptions.find(o => o.value === incomeStability)?.label || "" },
+        { label: "Investment Experience", value: investmentExperienceOptions.find(o => o.value === investmentExperience)?.label || "" },
+      ] : []),
+    ],
+    results: [
+      { label: "Risk Score", value: `${results.score}/100`, highlight: true },
+      { label: "Risk Profile", value: results.profile.category },
+      { label: "Equity Allocation", value: `${results.allocation.equity}%` },
+      { label: "Debt Allocation", value: `${results.allocation.debt}%` },
+      { label: "Gold Allocation", value: `${results.allocation.gold}%` },
+    ],
+    insights: [
+      `Your risk profile is "${results.profile.category}" with a score of ${results.score}/100.`,
+      results.profile.description,
+      `Recommended asset allocation: ${results.allocation.equity}% Equity, ${results.allocation.debt}% Debt, ${results.allocation.gold}% Gold.`,
+      `Suggested investment products: ${results.suggestedProducts.join(', ')}.`,
+    ],
+  };
+
   return (
     <CalculatorLayout
       title="Risk Appetite Calculator"
@@ -147,6 +178,7 @@ export default function RiskAppetiteCalculator() {
         { name: "Retirement Calculator", href: "/tools/retirement" },
         { name: "SWP Calculator", href: "/tools/swp" },
       ]}
+      pdfConfig={pdfConfig}
       results={
         <div className="space-y-6">
           {/* Risk Profile Gauge */}

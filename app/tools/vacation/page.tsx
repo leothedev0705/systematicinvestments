@@ -13,6 +13,7 @@ import {
 } from "@/components/calculators/CalculatorLayout";
 import { LineChart } from "@/components/calculators/Charts";
 import { calculateVacationFund, formatCurrency } from "@/lib/calculations";
+import { formatCurrencyPDF, type PDFConfig } from "@/lib/pdfGenerator";
 import { motion } from "framer-motion";
 
 export default function VacationCalculator() {
@@ -58,6 +59,32 @@ export default function VacationCalculator() {
 
   const progressPercentage = Math.min(100, (results.progressData[results.progressData.length - 1]?.saved || 0) / results.futureTarget * 100);
 
+  // PDF Configuration
+  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
+    inputs: [
+      { label: "Vacation Budget", value: `₹${vacationBudget.toLocaleString('en-IN')}` },
+      { label: "Time to Save", value: monthsToSave, unit: " months" },
+      { label: "Expected Return", value: expectedReturn, unit: "% p.a." },
+      ...(isAdvanced ? [
+        { label: "Travel Cost Inflation", value: inflationRate, unit: "%" },
+        { label: "Existing Fund", value: `₹${existingFund.toLocaleString('en-IN')}` },
+        { label: "Recurring Vacation", value: isRecurring ? `Yes (${recurringFrequency === "yearly" ? "Yearly" : recurringFrequency === "2years" ? "Every 2 Years" : "Every 3 Years"})` : "No" },
+      ] : []),
+    ],
+    results: [
+      { label: "Vacation Fund Goal", value: formatCurrencyPDF(results.futureTarget), highlight: true },
+      { label: "Monthly Savings Needed", value: formatCurrencyPDF(results.monthlyRequired), subValue: `₹${Math.round(results.monthlyRequired / 30).toLocaleString('en-IN')}/day` },
+      { label: "Current Budget", value: formatCurrencyPDF(vacationBudget) },
+      { label: "Progress", value: `${progressPercentage.toFixed(0)}%` },
+    ],
+    insights: [
+      `Save ${formatCurrencyPDF(results.monthlyRequired)} every month to reach your vacation goal in ${monthsToSave} months.`,
+      `That's just ₹${Math.round(results.monthlyRequired / 30).toLocaleString('en-IN')} per day!`,
+      isAdvanced && inflationRate > 0 ? `With ${inflationRate}% travel inflation, your target grows from ₹${vacationBudget.toLocaleString('en-IN')} to ${formatCurrencyPDF(results.futureTarget)}.` : '',
+      "Set up automatic transfers on salary day to stay on track.",
+    ].filter(Boolean) as string[],
+  };
+
   return (
     <CalculatorLayout
       title="Vacation Calculator"
@@ -76,6 +103,7 @@ export default function VacationCalculator() {
         { name: "SIP Calculator", href: "/tools/sip" },
         { name: "Child Education Calculator", href: "/tools/education" },
       ]}
+      pdfConfig={pdfConfig}
       results={
         <div className="space-y-6">
           {/* Vacation Fund Goal */}

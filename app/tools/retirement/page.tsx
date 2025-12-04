@@ -11,6 +11,7 @@ import {
 } from "@/components/calculators/CalculatorLayout";
 import { LineChart, DataTable } from "@/components/calculators/Charts";
 import { calculateRetirementCorpus, calculateRequiredSIP, formatCurrency } from "@/lib/calculations";
+import { formatCurrencyPDF, type PDFConfig } from "@/lib/pdfGenerator";
 
 export default function RetirementCalculator() {
   const [isAdvanced, setIsAdvanced] = useState(false);
@@ -96,6 +97,51 @@ export default function RetirementCalculator() {
     { key: "withdrawal", header: "Withdrawal", align: "right" as const, format: (v: number) => formatCurrency(v) },
   ];
 
+  // PDF Configuration
+  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
+    inputs: [
+      { label: "Current Age", value: currentAge, unit: " years" },
+      { label: "Retirement Age", value: retirementAge, unit: " years" },
+      { label: "Current Monthly Expenses", value: `₹${monthlyExpenses.toLocaleString('en-IN')}` },
+      { label: "Expected Return (Pre-retirement)", value: expectedReturn, unit: "% p.a." },
+      ...(isAdvanced ? [
+        { label: "Life Expectancy", value: lifeExpectancy, unit: " years" },
+        { label: "Current Savings", value: `₹${currentSavings.toLocaleString('en-IN')}` },
+        { label: "Expected Pension", value: `₹${expectedPension.toLocaleString('en-IN')}/month` },
+        { label: "Inflation Rate", value: inflationRate, unit: "%" },
+        { label: "Post-retirement Return", value: postRetirementReturn, unit: "%" },
+      ] : []),
+    ],
+    results: [
+      { label: "Required Retirement Corpus", value: formatCurrencyPDF(results.requiredCorpus), highlight: true },
+      { label: "Monthly SIP Needed", value: formatCurrencyPDF(results.monthlySIP), subValue: `for ${results.yearsToRetirement} years` },
+      { label: "Monthly Expenses at Retirement", value: formatCurrencyPDF(results.monthlyExpensesAtRetirement) },
+      { label: "Years in Retirement", value: `${results.yearsInRetirement} years` },
+      ...(isAdvanced && currentSavings > 0 ? [
+        { label: "Projected from Current Savings", value: formatCurrencyPDF(results.projectedCorpus) },
+        { label: "Gap to Fill", value: formatCurrencyPDF(results.gap) },
+      ] : []),
+    ],
+    tables: [
+      {
+        title: "Retirement Corpus Projection",
+        headers: ["Age", "Corpus", "Annual Expense", "Withdrawal"],
+        rows: results.yearlyProjection.slice(0, 20).map(row => [
+          row.year,
+          formatCurrencyPDF(row.corpus),
+          formatCurrencyPDF(row.annualExpense),
+          formatCurrencyPDF(row.withdrawal),
+        ]),
+      },
+    ],
+    insights: [
+      `You need ${formatCurrencyPDF(results.requiredCorpus)} to maintain your lifestyle from age ${retirementAge} to ${isAdvanced ? lifeExpectancy : 85}.`,
+      `Your current expenses of ₹${monthlyExpenses.toLocaleString('en-IN')}/month will become ${formatCurrencyPDF(results.monthlyExpensesAtRetirement)}/month at retirement due to inflation.`,
+      `Start a monthly SIP of ${formatCurrencyPDF(results.monthlySIP)} today to achieve your retirement goal.`,
+      `You have ${results.yearsToRetirement} years to build your retirement corpus.`,
+    ],
+  };
+
   return (
     <CalculatorLayout
       title="Retirement Calculator"
@@ -115,6 +161,7 @@ export default function RetirementCalculator() {
         { name: "SWP Calculator", href: "/tools/swp" },
         { name: "Risk Appetite Calculator", href: "/tools/risk-appetite" },
       ]}
+      pdfConfig={pdfConfig}
       results={
         <div className="space-y-6">
           {/* Key metrics */}

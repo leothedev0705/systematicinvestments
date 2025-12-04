@@ -12,6 +12,7 @@ import {
 } from "@/components/calculators/CalculatorLayout";
 import { DataTable } from "@/components/calculators/Charts";
 import { calculateSIPDelayCost, formatCurrency } from "@/lib/calculations";
+import { formatCurrencyPDF, type PDFConfig } from "@/lib/pdfGenerator";
 import { motion } from "framer-motion";
 
 export default function SIPDelayCalculator() {
@@ -48,6 +49,40 @@ export default function SIPDelayCalculator() {
     { key: "extraSIPNeeded", header: "Extra SIP/Month", align: "right" as const, format: (v: number) => v === 0 ? "-" : `+₹${v.toLocaleString('en-IN')}` },
   ];
 
+  // PDF Configuration
+  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
+    inputs: [
+      { label: "Monthly SIP Amount", value: `₹${monthlySIP.toLocaleString('en-IN')}` },
+      { label: "Total Investment Period", value: investmentPeriod, unit: " years" },
+      { label: "Delay Period", value: delayPeriod, unit: " months" },
+      { label: "Expected Return", value: expectedReturn, unit: "% p.a." },
+    ],
+    results: [
+      { label: "Cost of Delay", value: formatCurrencyPDF(results.costOfDelay), highlight: true, subValue: `${costPercentage}% of potential wealth lost` },
+      { label: "Value Without Delay", value: formatCurrencyPDF(results.withoutDelay) },
+      { label: "Value With Delay", value: formatCurrencyPDF(results.withDelay) },
+      { label: "Extra SIP Needed to Recover", value: `₹${results.extraSIPNeeded.toLocaleString('en-IN')}/month`, subValue: `+${extraSIPPercentage}% increase` },
+    ],
+    tables: [
+      {
+        title: "Delay Scenarios Comparison",
+        headers: ["Delay", "Final Value", "Loss", "Extra SIP Needed"],
+        rows: results.delayScenarios.map(row => [
+          row.delayMonths === 0 ? "No Delay" : `${row.delayMonths} months`,
+          formatCurrencyPDF(row.finalValue),
+          row.loss === 0 ? "-" : formatCurrencyPDF(row.loss),
+          row.extraSIPNeeded === 0 ? "-" : `+₹${row.extraSIPNeeded.toLocaleString('en-IN')}`,
+        ]),
+      },
+    ],
+    insights: [
+      `Delaying your SIP by ${delayPeriod} months costs you ${formatCurrencyPDF(results.costOfDelay)} - that's ${costPercentage}% of your potential wealth!`,
+      `To recover from the ${delayPeriod}-month delay, you'd need to increase your SIP by ₹${results.extraSIPNeeded.toLocaleString('en-IN')}/month (+${extraSIPPercentage}%).`,
+      `Every month of delay costs approximately ${formatCurrencyPDF(Math.round(results.costOfDelay / delayPeriod))} in potential wealth.`,
+      "The best time to start investing was yesterday. The second best time is today!",
+    ],
+  };
+
   return (
     <CalculatorLayout
       title="SIP Delay Calculator"
@@ -66,6 +101,7 @@ export default function SIPDelayCalculator() {
         { name: "Retirement Calculator", href: "/tools/retirement" },
         { name: "Child Education Calculator", href: "/tools/education" },
       ]}
+      pdfConfig={pdfConfig}
       results={
         <div className="space-y-6">
           {/* Cost of Delay - Prominent Warning */}

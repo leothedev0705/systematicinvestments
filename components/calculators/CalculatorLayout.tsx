@@ -15,7 +15,10 @@ import {
   ChevronDown,
   ChevronUp,
   Calculator,
+  FileText,
+  Loader2,
 } from "lucide-react";
+import { generateCalculatorPDF, type PDFConfig } from "@/lib/pdfGenerator";
 
 interface CalculatorLayoutProps {
   title: string;
@@ -27,6 +30,7 @@ interface CalculatorLayoutProps {
   assumptions?: string[];
   relatedCalculators?: { name: string; href: string }[];
   howItWorks?: string;
+  pdfConfig?: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'>;
 }
 
 export const CalculatorLayout: React.FC<CalculatorLayoutProps> = ({
@@ -39,10 +43,12 @@ export const CalculatorLayout: React.FC<CalculatorLayoutProps> = ({
   assumptions,
   relatedCalculators,
   howItWorks,
+  pdfConfig,
 }) => {
   const [showAssumptions, setShowAssumptions] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const handleCopy = () => {
     // Copy results to clipboard
@@ -65,6 +71,31 @@ export const CalculatorLayout: React.FC<CalculatorLayoutProps> = ({
       } catch (err) {
         console.log("Error sharing:", err);
       }
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!pdfConfig) return;
+    
+    setIsGeneratingPDF(true);
+    
+    // Small delay to show loading state
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    try {
+      const fullConfig: PDFConfig = {
+        calculatorName: title,
+        calculatorDescription: description,
+        assumptions: assumptions || [],
+        ...pdfConfig,
+      };
+      
+      generateCalculatorPDF(fullConfig);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -235,6 +266,26 @@ export const CalculatorLayout: React.FC<CalculatorLayoutProps> = ({
                   >
                     <Share2 className="w-4 h-4 text-muted" />
                   </button>
+                  {pdfConfig && (
+                    <button
+                      onClick={handleDownloadPDF}
+                      disabled={isGeneratingPDF}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-light transition-colors disabled:opacity-50"
+                      title="Download PDF Report"
+                    >
+                      {isGeneratingPDF ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="hidden sm:inline">Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4" />
+                          <span className="hidden sm:inline">Download PDF</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
 

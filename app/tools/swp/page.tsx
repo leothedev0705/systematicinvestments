@@ -13,6 +13,7 @@ import {
 } from "@/components/calculators/CalculatorLayout";
 import { LineChart, DataTable } from "@/components/calculators/Charts";
 import { calculateSWP, formatCurrency } from "@/lib/calculations";
+import { formatCurrencyPDF, type PDFConfig } from "@/lib/pdfGenerator";
 
 export default function SWPCalculator() {
   const [isAdvanced, setIsAdvanced] = useState(false);
@@ -91,6 +92,50 @@ export default function SWPCalculator() {
     { value: "quarterly", label: "Quarterly" },
   ];
 
+  // PDF Configuration
+  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
+    inputs: [
+      { label: "Investment Amount (Corpus)", value: `₹${investmentAmount.toLocaleString('en-IN')}` },
+      { label: "Monthly Withdrawal", value: `₹${monthlyWithdrawal.toLocaleString('en-IN')}` },
+      { label: "Expected Return", value: expectedReturn, unit: "% p.a." },
+      ...(isAdvanced ? [
+        { label: "Withdrawal Frequency", value: withdrawalFrequency === "monthly" ? "Monthly" : "Quarterly" },
+        { label: "Inflation Adjustment", value: inflationAdjustment ? `Yes (${inflationRate}%)` : "No" },
+        { label: "Consider LTCG Tax", value: considerTax ? "Yes" : "No" },
+      ] : []),
+    ],
+    results: [
+      { label: "Corpus Duration", value: results.willLastForever ? "Forever (Sustainable)" : `${results.yearsLasting} years ${results.remainingMonths} months`, highlight: true },
+      { label: "Total Withdrawals", value: formatCurrencyPDF(results.totalWithdrawn) },
+      { label: "Initial Corpus", value: formatCurrencyPDF(investmentAmount) },
+      { label: "Total Months", value: `${results.monthsLasting}+` },
+      ...(isAdvanced && considerTax && results.taxAmount > 0 ? [
+        { label: "Estimated LTCG Tax", value: formatCurrencyPDF(results.taxAmount) },
+        { label: "Net Withdrawals After Tax", value: formatCurrencyPDF(results.netWithdrawn) },
+      ] : []),
+    ],
+    tables: results.monthlyBreakdown.length > 0 ? [
+      {
+        title: "Withdrawal Schedule",
+        headers: ["Month", "Withdrawal", "Remaining Corpus", "Total Withdrawn"],
+        rows: results.monthlyBreakdown.slice(0, 20).map(row => [
+          row.month,
+          formatCurrencyPDF(row.withdrawal),
+          formatCurrencyPDF(row.remainingCorpus),
+          formatCurrencyPDF(row.totalWithdrawn),
+        ]),
+      },
+    ] : [],
+    insights: [
+      results.willLastForever 
+        ? `Your corpus is sustainable indefinitely! Your returns exceed your withdrawals.`
+        : `Your corpus of ${formatCurrencyPDF(investmentAmount)} will last for ${results.yearsLasting} years and ${results.remainingMonths} months.`,
+      `You can withdraw a total of ${formatCurrencyPDF(results.totalWithdrawn)} over the corpus lifetime.`,
+      `Safe withdrawal rate: To make corpus last forever, withdraw max ${formatCurrencyPDF(Math.round(investmentAmount * expectedReturn / 100 / 12))}/month.`,
+      `Current withdrawal rate: ${((monthlyWithdrawal * 12 / investmentAmount) * 100).toFixed(2)}% per year.`,
+    ],
+  };
+
   return (
     <CalculatorLayout
       title="SWP Calculator"
@@ -111,6 +156,7 @@ export default function SWPCalculator() {
         { name: "Retirement Calculator", href: "/tools/retirement" },
         { name: "Risk Appetite Calculator", href: "/tools/risk-appetite" },
       ]}
+      pdfConfig={pdfConfig}
       results={
         <div className="space-y-6">
           {/* Duration Result - Prominent */}

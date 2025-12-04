@@ -12,6 +12,7 @@ import {
 } from "@/components/calculators/CalculatorLayout";
 import { LineChart, DataTable } from "@/components/calculators/Charts";
 import { calculateEducationFund, formatCurrency } from "@/lib/calculations";
+import { formatCurrencyPDF, type PDFConfig } from "@/lib/pdfGenerator";
 
 export default function EducationCalculator() {
   const [isAdvanced, setIsAdvanced] = useState(false);
@@ -84,6 +85,46 @@ export default function EducationCalculator() {
     { key: "target", header: "Target", align: "right" as const, format: (v: number) => formatCurrency(v) },
   ];
 
+  // PDF Configuration
+  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
+    inputs: [
+      { label: "Child's Current Age", value: childAge, unit: " years" },
+      { label: "Education Start Age", value: educationStartAge, unit: " years" },
+      { label: "Current Annual Education Cost", value: `₹${currentCost.toLocaleString('en-IN')}` },
+      { label: "Expected Return", value: expectedReturn, unit: "% p.a." },
+      ...(isAdvanced ? [
+        { label: "Education Inflation Rate", value: educationInflation, unit: "%" },
+        { label: "Course Duration", value: educationDuration, unit: " years" },
+        { label: "Existing Savings", value: `₹${existingSavings.toLocaleString('en-IN')}` },
+        { label: "Foreign Education", value: isForeignEducation ? "Yes (1.5x premium)" : "No" },
+      ] : []),
+    ],
+    results: [
+      { label: "Total Future Education Cost", value: formatCurrencyPDF(results.futureCost), highlight: true, subValue: `${results.costMultiplier}x of current annual cost` },
+      { label: "Monthly SIP Needed", value: formatCurrencyPDF(results.adjustedMonthly), subValue: `for ${results.yearsToEducation} years` },
+      { label: "OR Lumpsum Today", value: formatCurrencyPDF(results.adjustedLumpsum) },
+      { label: "Years Until Education", value: `${results.yearsToEducation} years` },
+    ],
+    tables: results.yearlyMilestones.length > 0 ? [
+      {
+        title: "Education Fund Milestones",
+        headers: ["Year", "Child's Age", "Accumulated", "Target"],
+        rows: results.yearlyMilestones.map(row => [
+          row.year,
+          row.childAge,
+          formatCurrencyPDF(row.accumulated),
+          formatCurrencyPDF(row.target),
+        ]),
+      },
+    ] : [],
+    insights: [
+      `Your child's education will cost approximately ${formatCurrencyPDF(results.futureCost)} when they turn ${educationStartAge}.`,
+      `Start a monthly SIP of ${formatCurrencyPDF(results.adjustedMonthly)} to reach your education goal.`,
+      `Alternatively, invest a lumpsum of ${formatCurrencyPDF(results.adjustedLumpsum)} today.`,
+      `Education inflation of ${isAdvanced ? educationInflation : 10}% means costs will be ${results.costMultiplier}x higher in ${results.yearsToEducation} years.`,
+    ],
+  };
+
   return (
     <CalculatorLayout
       title="Child Education Calculator"
@@ -103,6 +144,7 @@ export default function EducationCalculator() {
         { name: "SIP Delay Calculator", href: "/tools/sip-delay" },
         { name: "Retirement Calculator", href: "/tools/retirement" },
       ]}
+      pdfConfig={pdfConfig}
       results={
         <div className="space-y-6">
           {/* Future Cost - Prominent */}
