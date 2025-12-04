@@ -3,7 +3,14 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowRight, Shield, Users, TrendingUp, Award } from "lucide-react";
+
+// Dynamically import Lottie to avoid SSR issues
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
+
+// Import animation data
+import financeAnimation from "@/public/animations/Digital Finance Animation.json";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -159,7 +166,7 @@ export const Hero: React.FC = () => {
             </motion.div>
           </motion.div>
 
-          {/* Right Content - Metrics Cards */}
+          {/* Right Content - Lottie Animation with Metrics Overlay */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -167,59 +174,77 @@ export const Hero: React.FC = () => {
             className="relative hidden lg:block"
           >
             <div className="relative">
-              {/* Main Card */}
+              {/* Lottie Animation Container */}
               <motion.div
                 variants={floatVariants}
                 initial="initial"
                 animate="animate"
-                className="relative z-10 bg-white rounded-3xl shadow-elevated p-8 border border-card-border"
+                className="relative z-10"
               >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <h3 className="font-heading font-semibold text-primary">Performance Metrics</h3>
-                    <p className="text-sm text-muted">Our track record speaks volumes</p>
-                  </div>
+                {/* Glow effect behind animation */}
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/20 via-primary/10 to-transparent rounded-3xl blur-2xl scale-110" />
+                
+                {/* Lottie Animation */}
+                <div className="relative w-full h-[500px] flex items-center justify-center">
+                  <Lottie
+                    animationData={financeAnimation}
+                    loop={true}
+                    className="w-full h-full max-w-[500px]"
+                  />
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-background-secondary rounded-xl">
-                    <div className="flex items-center gap-3">
+                {/* Floating Metrics Cards */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8, duration: 0.5 }}
+                  className="absolute top-8 -left-4 bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg p-4 border border-card-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                       <Award className="w-5 h-5 text-accent" />
-                      <span className="text-navy-700 font-medium">Years of Experience</span>
                     </div>
-                    <span className="text-2xl font-heading font-bold text-primary">25+</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-background-secondary rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <TrendingUp className="w-5 h-5 text-accent" />
-                      <span className="text-navy-700 font-medium">Assets Under Management</span>
+                    <div>
+                      <p className="text-2xl font-heading font-bold text-primary">25+</p>
+                      <p className="text-xs text-muted">Years Experience</p>
                     </div>
-                    <span className="text-2xl font-heading font-bold text-primary">25 Cr+</span>
                   </div>
+                </motion.div>
 
-                  <div className="flex items-center justify-between p-4 bg-background-secondary rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <Users className="w-5 h-5 text-accent" />
-                      <span className="text-navy-700 font-medium">Happy Clients</span>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.0, duration: 0.5 }}
+                  className="absolute top-1/2 -right-8 bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg p-4 border border-card-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-2xl font-heading font-bold text-primary">1000+</span>
+                    <div>
+                      <p className="text-2xl font-heading font-bold text-primary">₹25 Cr+</p>
+                      <p className="text-xs text-muted">AUM</p>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
 
-                <div className="mt-6 pt-6 border-t border-card-border">
-                  <p className="text-sm text-muted text-center">
-                    Building wealth, one family at a time
-                  </p>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.2, duration: 0.5 }}
+                  className="absolute bottom-12 left-8 bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg p-4 border border-card-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-heading font-bold text-primary">1000+</p>
+                      <p className="text-xs text-muted">Happy Clients</p>
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
-
-              {/* Background decorative elements */}
-              <div className="absolute -top-4 -right-4 w-full h-full bg-accent/10 rounded-3xl -z-10" />
-              <div className="absolute -top-8 -right-8 w-full h-full bg-primary/5 rounded-3xl -z-20" />
             </div>
           </motion.div>
         </div>
