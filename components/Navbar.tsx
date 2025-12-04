@@ -17,7 +17,10 @@ const navLinks = [
   { name: "Contact", href: "#contact" },
 ];
 
-const toolsLink = { name: "Tools", href: "/tools", isExternal: true };
+const externalLinks = [
+  { name: "Tools", href: "/tools" },
+  { name: "Insights", href: "/blogs" },
+];
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -85,12 +88,15 @@ export const Navbar: React.FC = () => {
                   {link.name}
                 </button>
               ))}
-              <Link
-                href={toolsLink.href}
-                className="px-3 py-2 text-sm font-medium text-accent hover:text-accent-dark transition-colors rounded-lg hover:bg-accent/10"
-              >
-                {toolsLink.name}
-              </Link>
+              {externalLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="px-3 py-2 text-sm font-medium text-accent hover:text-accent-dark transition-colors rounded-lg hover:bg-accent/10"
+                >
+                  {link.name}
+                </Link>
+              ))}
             </div>
 
             {/* CTA Button */}
@@ -153,6 +159,16 @@ export const Navbar: React.FC = () => {
                     className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
                   >
                     📊 Financial Tools
+                  </motion.span>
+                </Link>
+                <Link href="/blogs" onClick={() => setIsMobileMenuOpen(false)}>
+                  <motion.span
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: (navLinks.length + 1) * 0.05 }}
+                    className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
+                  >
+                    📰 Insights & News
                   </motion.span>
                 </Link>
                 <Link href="/book-review" className="w-full mt-2">
