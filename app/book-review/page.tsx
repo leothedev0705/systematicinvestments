@@ -108,14 +108,50 @@ export default function BookReviewPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Google Apps Script Web App URL - Replace with your deployed script URL
+      const GOOGLE_SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL || "";
+      
+      // Prepare data for Google Sheets
+      const submissionData = {
+        timestamp: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        age: formData.age,
+        occupation: formData.occupation,
+        investmentRange: formData.investmentRange,
+        goals: formData.goals.join(", "),
+        existingInvestments: formData.existingInvestments,
+        preferredDate: formData.preferredDate,
+        preferredTime: formData.preferredTime,
+        message: formData.message,
+      };
 
-    // In production, you would send this data to your backend
-    console.log("Form submitted:", formData);
+      if (GOOGLE_SCRIPT_URL) {
+        // Submit to Google Sheets via Apps Script
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors", // Required for Google Apps Script
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(submissionData),
+        });
+        
+        console.log("Form submitted to Google Sheets");
+      } else {
+        // Fallback: Log to console if no URL configured
+        console.log("Form data (Google Sheets URL not configured):", submissionData);
+      }
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("There was an error submitting your request. Please try again or call us directly.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSubmitted) {
