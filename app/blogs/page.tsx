@@ -23,6 +23,7 @@ import {
   getTimeAgo,
   type BlogCategory,
 } from "@/data/blogs";
+import StockTicker from "@/components/StockTicker";
 
 export default function BlogsPage() {
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory | 'all'>('all');
@@ -43,6 +44,9 @@ export default function BlogsPage() {
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
+      {/* Stock Ticker */}
+      <StockTicker />
+
       {/* Premium Header */}
       <header className="bg-[#0A0A0A] text-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto">
@@ -51,14 +55,6 @@ export default function BlogsPage() {
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-4">
                 <span className="text-gray-400">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                <span className="text-red-500 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                  LIVE
-                </span>
-              </div>
-              <div className="hidden sm:flex items-center gap-4 text-gray-400">
-                <span>NIFTY 50: 21,456.80 <span className="text-green-400">+0.82%</span></span>
-                <span>SENSEX: 71,234.56 <span className="text-green-400">+0.75%</span></span>
               </div>
             </div>
           </div>

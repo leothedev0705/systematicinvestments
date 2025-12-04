@@ -275,7 +275,7 @@ export default function BookReviewPage() {
               <div className="bg-primary rounded-2xl p-6 text-white">
                 <div className="flex items-center gap-3 mb-4">
                   <Image
-                    src="/images/founder.png"
+                    src="/images/Founder1.png"
                     alt="Vivek Bhande"
                     width={60}
                     height={60}
