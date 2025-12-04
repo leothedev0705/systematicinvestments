@@ -54,14 +54,13 @@ export const Chatbot: React.FC = () => {
   const [speechSupported, setSpeechSupported] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const recognitionRef = useRef<any>(null);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Check for speech support
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      setSpeechSupported(!!SpeechRecognition && !!window.speechSynthesis);
-      synthRef.current = window.speechSynthesis;
+      setSpeechSupported(!!SpeechRecognition);
     }
   }, []);
 
@@ -91,8 +90,9 @@ export const Chatbot: React.FC = () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      if (synthRef.current) {
-        synthRef.current.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
     };
   }, []);
@@ -138,42 +138,94 @@ export const Chatbot: React.FC = () => {
     setIsListening(false);
   };
 
-  // Text to Speech
-  const speak = (text: string) => {
-    if (!synthRef.current || !ttsEnabled) return;
+  // Text to Speech using OpenAI TTS
+  const speak = async (text: string) => {
+    if (!ttsEnabled) return;
 
-    synthRef.current.cancel();
+    // Stop any currently playing audio
+    stopSpeaking();
 
-    const cleanText = text
-      .replace(/#{1,6}\s/g, '')
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/`(.*?)`/g, '$1')
-      .replace(/\[(.*?)\]\(.*?\)/g, '$1')
-      .replace(/[-•]\s/g, '')
-      .replace(/\n+/g, '. ');
+    try {
+      setIsSpeaking(true);
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'en-IN';
-    utterance.rate = 1;
-    utterance.pitch = 1;
+      // Call OpenAI TTS API
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
 
-    const voices = synthRef.current.getVoices();
-    const indianVoice = voices.find(v => v.lang === 'en-IN') || voices.find(v => v.lang.startsWith('en'));
-    if (indianVoice) {
-      utterance.voice = indianVoice;
+      if (!response.ok) {
+        throw new Error("Failed to generate speech");
+      }
+
+      // Create audio element and play
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+      };
+
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+      };
+
+      await audio.play();
+    } catch (error) {
+      console.error("TTS error:", error);
+      setIsSpeaking(false);
+      // Fallback to browser TTS if OpenAI fails
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        const synth = window.speechSynthesis;
+        synth.cancel();
+        
+        const cleanText = text
+          .replace(/#{1,6}\s/g, '')
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/\*(.*?)\*/g, '$1')
+          .replace(/`(.*?)`/g, '$1')
+          .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+          .replace(/[-•]\s/g, '')
+          .replace(/\n+/g, '. ');
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'en-IN';
+        utterance.rate = 1;
+        utterance.pitch = 1;
+
+        const voices = synth.getVoices();
+        const indianVoice = voices.find(v => v.lang === 'en-IN') || voices.find(v => v.lang.startsWith('en'));
+        if (indianVoice) {
+          utterance.voice = indianVoice;
+        }
+
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+
+        synth.speak(utterance);
+      }
     }
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    synthRef.current.speak(utterance);
   };
 
   const stopSpeaking = () => {
-    if (synthRef.current) {
-      synthRef.current.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
   };
