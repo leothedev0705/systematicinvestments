@@ -86,6 +86,18 @@ export const authors: Author[] = [
   },
 ];
 
+// Reliable image URLs that will always work
+const BLOG_IMAGES = {
+  regulations: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&h=600&fit=crop',
+  markets: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200&h=600&fit=crop',
+  mutualFunds: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=600&fit=crop',
+  economy: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&h=600&fit=crop',
+  registration: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&h=600&fit=crop',
+  investing: 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=1200&h=600&fit=crop',
+  wealth: 'https://images.unsplash.com/photo-1560472355-536de3962603?w=1200&h=600&fit=crop',
+  commission: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&h=600&fit=crop',
+};
+
 export const blogPosts: BlogPost[] = [
   {
     id: '1',
@@ -141,7 +153,7 @@ The full circular with detailed guidelines is available on the SEBI website.
     author: authors[0],
     publishedAt: '2024-12-04T08:00:00Z',
     readTime: 6,
-    image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200&h=600&fit=crop',
+    image: BLOG_IMAGES.regulations,
     tags: ['SEBI', 'MFD', 'Regulations', 'Compliance'],
     featured: true,
     trending: true,
@@ -186,7 +198,7 @@ For long-term investors, systematic investment through SIPs remains the best str
     author: authors[1],
     publishedAt: '2024-12-03T14:30:00Z',
     readTime: 4,
-    image: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1200&h=600&fit=crop',
+    image: BLOG_IMAGES.markets,
     tags: ['Nifty', 'FII', 'Markets', 'Rally'],
     trending: true,
   },
@@ -238,7 +250,7 @@ Past performance doesn't guarantee future results. Investors should:
     author: authors[0],
     publishedAt: '2024-12-02T10:00:00Z',
     readTime: 8,
-    image: 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=1200&h=600&fit=crop',
+    image: BLOG_IMAGES.mutualFunds,
     tags: ['Mutual Funds', 'Performance', 'Best Funds', '2024'],
     featured: true,
   },
@@ -281,7 +293,7 @@ Market consensus suggests potential rate cuts starting Q2 2024, which could bene
     author: authors[1],
     publishedAt: '2024-12-01T16:00:00Z',
     readTime: 5,
-    image: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&h=600&fit=crop',
+    image: BLOG_IMAGES.economy,
     tags: ['RBI', 'Repo Rate', 'Debt Funds', 'Interest Rates'],
   },
   {
@@ -346,7 +358,7 @@ Required documents:
     author: authors[0],
     publishedAt: '2024-11-30T09:00:00Z',
     readTime: 10,
-    image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&h=600&fit=crop',
+    image: BLOG_IMAGES.registration,
     tags: ['AMFI', 'MFD Registration', 'NISM', 'Career'],
   },
   {
@@ -399,7 +411,7 @@ Lesson: Time in the market beats timing the market.
     author: authors[0],
     publishedAt: '2024-11-29T11:30:00Z',
     readTime: 6,
-    image: 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=1200&h=600&fit=crop',
+    image: BLOG_IMAGES.investing,
     tags: ['SIP', 'Lumpsum', 'Investment Strategy', 'Market Timing'],
     featured: true,
   },
@@ -458,7 +470,7 @@ At Systematic Investments, we offer personalized wealth management with dedicate
     author: authors[0],
     publishedAt: '2024-11-28T08:00:00Z',
     readTime: 7,
-    image: 'https://images.unsplash.com/photo-1560472355-536de3962603?w=1200&h=600&fit=crop',
+    image: BLOG_IMAGES.wealth,
     tags: ['HNI', 'Wealth Management', 'Tax Planning', 'Portfolio'],
   },
   {
@@ -517,7 +529,7 @@ Major AMCs have already begun restructuring their distribution agreements. MFDs 
     author: authors[1],
     publishedAt: '2024-11-27T13:00:00Z',
     readTime: 5,
-    image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&h=600&fit=crop',
+    image: BLOG_IMAGES.commission,
     tags: ['SEBI', 'Trail Commission', 'MFD', 'Regulations'],
     trending: true,
   },

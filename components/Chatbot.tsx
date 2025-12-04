@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   MessageCircle,
   X,
@@ -19,8 +21,12 @@ import {
   Check,
   AlertCircle,
   RefreshCw,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Square,
 } from "lucide-react";
-import Image from "next/image";
 
 interface Message {
   id: string;
@@ -39,23 +45,45 @@ const quickQuestions = [
 export const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [apiKey, setApiKey] = useState("server"); // Default to "server" - API key is on server
+  const [apiKey, setApiKey] = useState("server");
   const [tempApiKey, setTempApiKey] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [useServerKey, setUseServerKey] = useState(true); // Server has the API key
+  const [useServerKey, setUseServerKey] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Check for custom API key in localStorage (optional override)
+  // Speech states
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [ttsEnabled, setTtsEnabled] = useState(true);
+  const recognitionRef = useRef<any>(null);
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+
+  // Check for speech support
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      setSpeechSupported(!!SpeechRecognition && !!window.speechSynthesis);
+      synthRef.current = window.speechSynthesis;
+    }
+  }, []);
+
+  // Check for custom API key in localStorage
   useEffect(() => {
     const savedKey = localStorage.getItem("sifi_api_key");
     if (savedKey) {
       setApiKey(savedKey);
       setTempApiKey(savedKey);
       setUseServerKey(false);
+    }
+    // Load TTS preference
+    const ttsPreference = localStorage.getItem("sifi_tts");
+    if (ttsPreference !== null) {
+      setTtsEnabled(ttsPreference === "true");
     }
   }, []);
 
@@ -71,6 +99,111 @@ export const Chatbot: React.FC = () => {
     }
   }, [isOpen, showSettings]);
 
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (synthRef.current) {
+        synthRef.current.cancel();
+      }
+    };
+  }, []);
+
+  // Speech Recognition setup
+  const startListening = () => {
+    if (!speechSupported) return;
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = false;
+    recognitionRef.current.interimResults = true;
+    recognitionRef.current.lang = 'en-IN'; // Indian English
+
+    recognitionRef.current.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognitionRef.current.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result: any) => result.transcript)
+        .join('');
+      setInputValue(transcript);
+    };
+
+    recognitionRef.current.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+    };
+
+    recognitionRef.current.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current.start();
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+  };
+
+  // Text to Speech
+  const speak = (text: string) => {
+    if (!synthRef.current || !ttsEnabled) return;
+
+    // Cancel any ongoing speech
+    synthRef.current.cancel();
+
+    // Clean text for speech (remove markdown)
+    const cleanText = text
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+      .replace(/[-•]\s/g, '')
+      .replace(/\n+/g, '. ');
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'en-IN';
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    // Try to use an Indian English voice
+    const voices = synthRef.current.getVoices();
+    const indianVoice = voices.find(v => v.lang === 'en-IN') || voices.find(v => v.lang.startsWith('en'));
+    if (indianVoice) {
+      utterance.voice = indianVoice;
+    }
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    synthRef.current.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if (synthRef.current) {
+      synthRef.current.cancel();
+    }
+    setIsSpeaking(false);
+  };
+
+  const toggleTts = () => {
+    const newValue = !ttsEnabled;
+    setTtsEnabled(newValue);
+    localStorage.setItem("sifi_tts", String(newValue));
+    if (!newValue && isSpeaking) {
+      stopSpeaking();
+    }
+  };
+
   const saveApiKey = () => {
     if (tempApiKey.trim()) {
       setApiKey(tempApiKey.trim());
@@ -83,6 +216,9 @@ export const Chatbot: React.FC = () => {
 
   const sendMessage = async (content: string) => {
     if (!content.trim()) return;
+
+    // Stop any ongoing speech
+    stopSpeaking();
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -105,7 +241,6 @@ export const Chatbot: React.FC = () => {
             role: m.role,
             content: m.content,
           })),
-          // Only send client API key if user has set one (not using server key)
           apiKey: useServerKey ? null : apiKey,
         }),
       });
@@ -124,6 +259,11 @@ export const Chatbot: React.FC = () => {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+
+      // Speak the response
+      if (ttsEnabled) {
+        speak(data.message);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -143,53 +283,7 @@ export const Chatbot: React.FC = () => {
   const clearChat = () => {
     setMessages([]);
     setError(null);
-  };
-
-  const formatMessage = (content: string) => {
-    // Simple markdown-like formatting
-    return content
-      .split("\n")
-      .map((line, i) => {
-        // Headers
-        if (line.startsWith("### ")) {
-          return (
-            <h4 key={i} className="font-semibold text-primary mt-3 mb-1">
-              {line.replace("### ", "")}
-            </h4>
-          );
-        }
-        if (line.startsWith("## ")) {
-          return (
-            <h3 key={i} className="font-bold text-primary mt-3 mb-2">
-              {line.replace("## ", "")}
-            </h3>
-          );
-        }
-        // Bullet points
-        if (line.startsWith("- ") || line.startsWith("• ")) {
-          return (
-            <li key={i} className="ml-4 text-sm">
-              {line.replace(/^[-•] /, "")}
-            </li>
-          );
-        }
-        // Bold text
-        const boldFormatted = line.replace(
-          /\*\*(.*?)\*\*/g,
-          '<strong class="font-semibold">$1</strong>'
-        );
-        // Empty lines
-        if (!line.trim()) {
-          return <br key={i} />;
-        }
-        return (
-          <p
-            key={i}
-            className="text-sm mb-1"
-            dangerouslySetInnerHTML={{ __html: boldFormatted }}
-          />
-        );
-      });
+    stopSpeaking();
   };
 
   return (
@@ -233,11 +327,34 @@ export const Chatbot: React.FC = () => {
                     SIFI - Financial Assistant
                   </h3>
                   <p className="text-white/70 text-xs">
-                    Powered by Systematic Investments
+                    {isSpeaking ? "🔊 Speaking..." : isListening ? "🎤 Listening..." : "Powered by SI"}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {/* TTS Toggle */}
+                <button
+                  onClick={toggleTts}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                    ttsEnabled ? 'bg-white/20' : 'bg-white/10'
+                  }`}
+                  title={ttsEnabled ? "Disable voice" : "Enable voice"}
+                >
+                  {ttsEnabled ? (
+                    <Volume2 className="w-4 h-4 text-white" />
+                  ) : (
+                    <VolumeX className="w-4 h-4 text-white/60" />
+                  )}
+                </button>
+                {isSpeaking && (
+                  <button
+                    onClick={stopSpeaking}
+                    className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center hover:bg-red-500/30 transition-colors"
+                    title="Stop speaking"
+                  >
+                    <Square className="w-3 h-3 text-white fill-white" />
+                  </button>
+                )}
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
@@ -252,7 +369,10 @@ export const Chatbot: React.FC = () => {
                   <RefreshCw className="w-4 h-4 text-white" />
                 </button>
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    setIsOpen(false);
+                    stopSpeaking();
+                  }}
                   className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
                 >
                   <X className="w-4 h-4 text-white" />
@@ -293,9 +413,9 @@ export const Chatbot: React.FC = () => {
                       </button>
                     </div>
                     <p className="text-xs text-muted mt-2">
-                      {useServerKey 
-                        ? "✓ Using Systematic Investments' AI service. Add your own key for unlimited usage."
-                        : "Using your custom API key. Clear to use default."}
+                      {useServerKey
+                        ? "✓ Using Systematic Investments' AI service."
+                        : "Using your custom API key."}
                     </p>
                     {!useServerKey && (
                       <button
@@ -327,7 +447,7 @@ export const Chatbot: React.FC = () => {
                     </div>
                     <div className="flex-1 bg-primary/5 rounded-2xl rounded-tl-md p-4">
                       <p className="text-sm text-navy-700 mb-3">
-                        👋 Namaste! I&apos;m <strong>SIFI</strong> (Systematic Investments Financial Intelligence), 
+                        👋 Namaste! I&apos;m <strong>SIFI</strong> (Systematic Investments Financial Intelligence),
                         your personal financial advisor with expertise equivalent to a CA, CFA, and CFP combined!
                       </p>
                       <p className="text-sm text-navy-700 mb-3">
@@ -342,7 +462,7 @@ export const Chatbot: React.FC = () => {
                         <li>🎯 Goal-based financial planning</li>
                       </ul>
                       <p className="text-sm text-navy-700">
-                        How can I help you today?
+                        {speechSupported ? "🎤 Use voice input or type your question!" : "How can I help you today?"}
                       </p>
                     </div>
                   </div>
@@ -376,9 +496,7 @@ export const Chatbot: React.FC = () => {
                 >
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      message.role === "user"
-                        ? "bg-accent"
-                        : "bg-primary"
+                      message.role === "user" ? "bg-accent" : "bg-primary"
                     }`}
                   >
                     {message.role === "user" ? (
@@ -394,18 +512,32 @@ export const Chatbot: React.FC = () => {
                         : "bg-primary/5 rounded-tl-md"
                     }`}
                   >
-                    <div className="text-navy-700">
-                      {message.role === "assistant"
-                        ? formatMessage(message.content)
-                        : <p className="text-sm">{message.content}</p>
-                      }
+                    {message.role === "assistant" ? (
+                      <div className="prose prose-sm max-w-none prose-headings:text-navy-700 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-2 prose-h2:text-base prose-h3:text-sm prose-p:text-navy-700 prose-p:text-sm prose-p:my-1 prose-ul:my-1 prose-li:text-navy-700 prose-li:text-sm prose-li:my-0.5 prose-strong:text-navy-700 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none prose-a:text-accent prose-a:no-underline hover:prose-a:underline prose-table:text-xs prose-th:bg-gray-100 prose-th:p-2 prose-td:p-2 prose-blockquote:border-l-accent prose-blockquote:bg-accent/5 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:not-italic prose-blockquote:text-navy-700 prose-blockquote:text-sm">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-navy-700">{message.content}</p>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-[10px] text-muted">
+                        {message.timestamp.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      {message.role === "assistant" && speechSupported && (
+                        <button
+                          onClick={() => speak(message.content)}
+                          className="text-muted hover:text-accent transition-colors"
+                          title="Read aloud"
+                        >
+                          <Volume2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
-                    <p className="text-[10px] text-muted mt-2">
-                      {message.timestamp.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
                   </div>
                 </div>
               ))}
@@ -444,10 +576,25 @@ export const Chatbot: React.FC = () => {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ask me anything about finance..."
+                  placeholder={isListening ? "Listening..." : "Ask me anything..."}
                   disabled={isLoading}
                   className="flex-1 px-4 py-3 rounded-xl border border-card-border bg-white focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent text-sm disabled:opacity-50"
                 />
+                {/* Voice Input Button */}
+                {speechSupported && (
+                  <button
+                    type="button"
+                    onClick={isListening ? stopListening : startListening}
+                    disabled={isLoading}
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors disabled:opacity-50 ${
+                      isListening
+                        ? "bg-red-500 text-white animate-pulse"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  </button>
+                )}
                 <button
                   type="submit"
                   disabled={!inputValue.trim() || isLoading}
@@ -457,10 +604,8 @@ export const Chatbot: React.FC = () => {
                 </button>
               </form>
               <p className="text-[10px] text-center text-muted mt-2">
-                SIFI by Systematic Investments • For personalized advice, call{" "}
-                <a href="tel:+919821255653" className="text-accent hover:underline">
-                  +91 98212 55653
-                </a>
+                {speechSupported && "🎤 Voice enabled • "}
+                SIFI by Systematic Investments
               </p>
             </div>
           </motion.div>
@@ -469,4 +614,3 @@ export const Chatbot: React.FC = () => {
     </>
   );
 };
-
