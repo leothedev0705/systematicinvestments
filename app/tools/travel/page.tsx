@@ -133,12 +133,6 @@ export default function TravelCalculator() {
         ]),
       },
     ],
-    insights: [
-      `Your ${destination === "domestic" ? "domestic" : "international"} trip will cost approximately ${formatCurrencyPDF(results.totalCost)} for ${travelers} travelers.`,
-      `That's ${formatCurrencyPDF(results.perPersonCost)} per person for ${duration} days.`,
-      `Save ${formatCurrencyPDF(results.monthlyRequired)} monthly to fund your trip in ${isAdvanced ? monthsUntilTrip : 6} months.`,
-      `Daily budget: ${formatCurrencyPDF(Math.round(results.totalCost / duration))} (${formatCurrencyPDF(Math.round(results.totalCost / duration / travelers))} per person).`,
-    ],
   };
 
   return (

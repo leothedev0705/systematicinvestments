@@ -116,12 +116,6 @@ export default function SIPCalculator() {
         ]),
       },
     ],
-    insights: [
-      `Your monthly SIP of ₹${monthlySIP.toLocaleString('en-IN')} will grow to ${formatCurrencyPDF(results.futureValue)} in ${years} years.`,
-      `You will invest a total of ${formatCurrencyPDF(results.totalInvested)} and gain ${formatCurrencyPDF(results.wealthGained)} in returns.`,
-      `This represents a ${((results.wealthGained / results.totalInvested) * 100).toFixed(1)}% absolute return on your investment.`,
-      isAdvanced && annualStepUp > 0 ? `With ${annualStepUp}% annual step-up, your final year SIP will be ₹${results.yearlyBreakdown[results.yearlyBreakdown.length - 1]?.sipAmount.toLocaleString('en-IN')}/month.` : '',
-    ].filter(Boolean) as string[],
   };
 
   return (

@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// Company details
+// Company details for letterhead
 const COMPANY = {
   name: "Systematic Investments",
   tagline: "Where Growth Meets Stability",
@@ -12,14 +12,16 @@ const COMPANY = {
   established: "Est. 1996",
 };
 
-// Colors
+// Premium color palette
 const COLORS = {
-  primary: [10, 37, 64] as [number, number, number],      // Navy #0A2540
-  accent: [212, 168, 83] as [number, number, number],     // Gold #D4A853
-  text: [51, 51, 51] as [number, number, number],         // Dark gray
-  muted: [128, 128, 128] as [number, number, number],     // Gray
-  lightBg: [248, 250, 252] as [number, number, number],   // Light background
+  navy: [10, 37, 64] as [number, number, number],
+  gold: [212, 168, 83] as [number, number, number],
+  darkText: [30, 41, 59] as [number, number, number],
+  mutedText: [100, 116, 139] as [number, number, number],
+  lightBg: [248, 250, 252] as [number, number, number],
   white: [255, 255, 255] as [number, number, number],
+  success: [34, 197, 94] as [number, number, number],
+  border: [226, 232, 240] as [number, number, number],
 };
 
 export interface PDFInputField {
@@ -43,13 +45,13 @@ export interface PDFTableData {
 
 export interface PDFConfig {
   calculatorName: string;
-  calculatorDescription: string;
+  calculatorDescription?: string;
   inputs: PDFInputField[];
   results: PDFResultField[];
   tables?: PDFTableData[];
   assumptions?: string[];
   insights?: string[];
-  chartImage?: string; // Base64 image
+  chartImage?: string;
 }
 
 export function generateCalculatorPDF(config: PDFConfig): void {
@@ -64,70 +66,59 @@ export function generateCalculatorPDF(config: PDFConfig): void {
   const margin = 15;
   let currentY = 0;
 
-  // ===== HEADER / LETTERHEAD =====
-  const drawHeader = () => {
-    // Navy header background
-    doc.setFillColor(...COLORS.primary);
-    doc.rect(0, 0, pageWidth, 40, 'F');
+  // ========== PREMIUM LETTERHEAD ==========
+  const drawLetterhead = () => {
+    // Navy header bar
+    doc.setFillColor(...COLORS.navy);
+    doc.rect(0, 0, pageWidth, 38, 'F');
 
-    // Gold accent line
-    doc.setFillColor(...COLORS.accent);
-    doc.rect(0, 40, pageWidth, 3, 'F');
+    // Gold accent stripe
+    doc.setFillColor(...COLORS.gold);
+    doc.rect(0, 38, pageWidth, 2.5, 'F');
 
     // Company name
     doc.setTextColor(...COLORS.white);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
-    doc.text(COMPANY.name, margin, 18);
+    doc.setFontSize(20);
+    doc.text(COMPANY.name, margin, 16);
 
-    // Tagline
+    // Tagline with gold color
+    doc.setTextColor(...COLORS.gold);
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(10);
-    doc.setTextColor(...COLORS.accent);
-    doc.text(COMPANY.tagline, margin, 26);
-
-    // Established badge
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(...COLORS.white);
-    doc.text(COMPANY.established, margin, 34);
+    doc.text(COMPANY.tagline, margin, 24);
 
-    // Contact info (right side)
+    // Established
+    doc.setTextColor(180, 180, 180);
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(200, 200, 200);
-    const rightX = pageWidth - margin;
-    doc.text(COMPANY.phone, rightX, 18, { align: 'right' });
-    doc.text(COMPANY.email, rightX, 24, { align: 'right' });
-    doc.text(COMPANY.website, rightX, 30, { align: 'right' });
+    doc.text(COMPANY.established, margin, 32);
 
-    currentY = 53;
+    // Contact details (right aligned)
+    doc.setTextColor(200, 200, 200);
+    doc.setFontSize(8);
+    const rightX = pageWidth - margin;
+    doc.text(COMPANY.phone, rightX, 14, { align: 'right' });
+    doc.text(COMPANY.email, rightX, 20, { align: 'right' });
+    doc.text(COMPANY.website, rightX, 26, { align: 'right' });
+    doc.text(COMPANY.address.split(',')[0], rightX, 32, { align: 'right' });
+
+    currentY = 50;
   };
 
-  // ===== FOOTER =====
+  // ========== PREMIUM FOOTER ==========
   const drawFooter = (pageNum: number, totalPages: number) => {
-    const footerY = pageHeight - 20;
+    const footerY = pageHeight - 18;
 
-    // Footer line
-    doc.setDrawColor(...COLORS.accent);
+    // Gold line
+    doc.setDrawColor(...COLORS.gold);
     doc.setLineWidth(0.5);
-    doc.line(margin, footerY, pageWidth - margin, footerY);
+    doc.line(margin, footerY - 2, pageWidth - margin, footerY - 2);
 
-    // Disclaimer
+    // Generation timestamp
     doc.setFontSize(7);
-    doc.setTextColor(...COLORS.muted);
-    doc.setFont('helvetica', 'italic');
-    doc.text(
-      'Disclaimer: This report is for informational purposes only and does not constitute financial advice. Past performance is not indicative of future results.',
-      margin,
-      footerY + 5,
-      { maxWidth: pageWidth - margin * 2 }
-    );
-
-    // Page number
+    doc.setTextColor(...COLORS.mutedText);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, footerY + 10, { align: 'right' });
-
-    // Generation date
     const date = new Date().toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'long',
@@ -135,164 +126,204 @@ export function generateCalculatorPDF(config: PDFConfig): void {
       hour: '2-digit',
       minute: '2-digit',
     });
-    doc.text(`Generated on: ${date}`, margin, footerY + 10);
+    doc.text(`Report Generated: ${date}`, margin, footerY + 4);
+
+    // Page number
+    doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, footerY + 4, { align: 'right' });
+
+    // Disclaimer (small)
+    doc.setFontSize(6);
+    doc.setTextColor(150, 150, 150);
+    doc.text(
+      'This is a calculation report based on user inputs. Please consult a financial advisor for personalized advice.',
+      pageWidth / 2,
+      footerY + 9,
+      { align: 'center' }
+    );
   };
 
-  // ===== CHECK PAGE BREAK =====
+  // ========== PAGE BREAK CHECK ==========
   const checkPageBreak = (requiredSpace: number) => {
-    if (currentY + requiredSpace > pageHeight - 30) {
+    if (currentY + requiredSpace > pageHeight - 25) {
       doc.addPage();
-      currentY = 20;
+      currentY = 15;
       return true;
     }
     return false;
   };
 
-  // ===== SECTION TITLE =====
-  const drawSectionTitle = (title: string) => {
-    checkPageBreak(15);
-    doc.setFillColor(...COLORS.primary);
-    doc.rect(margin, currentY, 4, 8, 'F');
-    doc.setTextColor(...COLORS.primary);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text(title, margin + 8, currentY + 6);
-    currentY += 14;
-  };
+  // ========== START PDF ==========
+  drawLetterhead();
 
-  // ===== START PDF GENERATION =====
-  drawHeader();
-
-  // Calculator Title
-  doc.setTextColor(...COLORS.primary);
+  // Report Title
+  doc.setTextColor(...COLORS.navy);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text(config.calculatorName, margin, currentY);
-  currentY += 6;
-
-  // Calculator Description
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(...COLORS.muted);
-  doc.text(config.calculatorDescription, margin, currentY, { maxWidth: pageWidth - margin * 2 });
-  currentY += 12;
-
-  // Divider
-  doc.setDrawColor(...COLORS.lightBg);
-  doc.setLineWidth(0.5);
-  doc.line(margin, currentY, pageWidth - margin, currentY);
+  doc.setFontSize(16);
+  doc.text(config.calculatorName + ' Report', margin, currentY);
   currentY += 10;
 
-  // ===== YOUR INPUTS =====
-  drawSectionTitle('Your Inputs');
+  // Decorative line under title
+  doc.setDrawColor(...COLORS.gold);
+  doc.setLineWidth(1);
+  doc.line(margin, currentY - 4, margin + 50, currentY - 4);
+  currentY += 4;
 
-  // Input grid (2 columns)
-  const inputColWidth = (pageWidth - margin * 2 - 10) / 2;
-  let inputX = margin;
-  let inputStartY = currentY;
-  let maxInputY = currentY;
+  // ========== USER INPUTS SECTION ==========
+  // Section header with accent
+  doc.setFillColor(...COLORS.navy);
+  doc.roundedRect(margin, currentY, 3, 10, 1, 1, 'F');
+  doc.setTextColor(...COLORS.navy);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Your Inputs', margin + 7, currentY + 7);
+  currentY += 16;
+
+  // Input cards in 2-column grid
+  const colWidth = (pageWidth - margin * 2 - 8) / 2;
+  let col = 0;
+  let rowStartY = currentY;
 
   config.inputs.forEach((input, index) => {
-    if (index > 0 && index % 2 === 0) {
-      inputX = margin;
-      inputStartY = maxInputY + 2;
+    const x = margin + col * (colWidth + 8);
+    
+    checkPageBreak(18);
+    if (index > 0 && col === 0) {
+      rowStartY = currentY;
     }
 
-    checkPageBreak(16);
-
-    // Input box background
+    // Card background
     doc.setFillColor(...COLORS.lightBg);
-    doc.roundedRect(inputX, inputStartY, inputColWidth, 14, 2, 2, 'F');
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, rowStartY, colWidth, 16, 2, 2, 'FD');
 
-    // Label
-    doc.setTextColor(...COLORS.muted);
+    // Label (small, muted)
+    doc.setTextColor(...COLORS.mutedText);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text(input.label, inputX + 4, inputStartY + 5);
+    doc.text(input.label, x + 4, rowStartY + 5);
 
-    // Value
-    doc.setTextColor(...COLORS.primary);
+    // Value (bold, prominent)
+    doc.setTextColor(...COLORS.navy);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     const displayValue = input.unit ? `${input.value}${input.unit}` : String(input.value);
-    doc.text(displayValue, inputX + 4, inputStartY + 11);
+    doc.text(displayValue, x + 4, rowStartY + 12);
 
-    maxInputY = Math.max(maxInputY, inputStartY + 14);
-
-    if (index % 2 === 0) {
-      inputX = margin + inputColWidth + 10;
+    col++;
+    if (col >= 2) {
+      col = 0;
+      currentY = rowStartY + 20;
     }
   });
 
-  currentY = maxInputY + 10;
+  // Handle odd number of inputs
+  if (col !== 0) {
+    currentY = rowStartY + 20;
+  }
+  currentY += 8;
 
-  // ===== RESULTS =====
-  drawSectionTitle('Calculation Results');
+  // ========== RESULTS SECTION ==========
+  checkPageBreak(60);
 
-  // Results in a table format
-  const resultsData = config.results.map(result => [
-    result.label,
-    result.subValue ? `${result.value}\n${result.subValue}` : String(result.value),
-  ]);
+  // Section header
+  doc.setFillColor(...COLORS.gold);
+  doc.roundedRect(margin, currentY, 3, 10, 1, 1, 'F');
+  doc.setTextColor(...COLORS.navy);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Calculation Results', margin + 7, currentY + 7);
+  currentY += 16;
 
-  autoTable(doc, {
-    startY: currentY,
-    head: [['Parameter', 'Value']],
-    body: resultsData,
-    margin: { left: margin, right: margin },
-    styles: {
-      fontSize: 10,
-      cellPadding: 4,
-    },
-    headStyles: {
-      fillColor: COLORS.primary,
-      textColor: COLORS.white,
-      fontStyle: 'bold',
-    },
-    alternateRowStyles: {
-      fillColor: COLORS.lightBg,
-    },
-    columnStyles: {
-      0: { cellWidth: 80 },
-      1: { fontStyle: 'bold', halign: 'right' },
-    },
-  });
-
-  currentY = (doc as any).lastAutoTable.finalY + 10;
-
-  // ===== HIGHLIGHT BOX FOR KEY RESULT =====
-  const primaryResult = config.results.find(r => r.highlight) || config.results[0];
-  if (primaryResult) {
-    checkPageBreak(30);
-
-    // Gold border box
-    doc.setFillColor(255, 250, 240);
-    doc.setDrawColor(...COLORS.accent);
-    doc.setLineWidth(1);
-    doc.roundedRect(margin, currentY, pageWidth - margin * 2, 25, 3, 3, 'FD');
+  // Find highlighted result for feature display
+  const highlightedResult = config.results.find(r => r.highlight);
+  
+  // If there's a highlighted result, show it prominently first
+  if (highlightedResult) {
+    // Premium highlight box
+    doc.setFillColor(255, 251, 235); // Warm cream
+    doc.setDrawColor(...COLORS.gold);
+    doc.setLineWidth(1.5);
+    doc.roundedRect(margin, currentY, pageWidth - margin * 2, 28, 4, 4, 'FD');
 
     // Label
-    doc.setTextColor(...COLORS.muted);
+    doc.setTextColor(...COLORS.mutedText);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(primaryResult.label, pageWidth / 2, currentY + 8, { align: 'center' });
+    doc.text(highlightedResult.label, pageWidth / 2, currentY + 8, { align: 'center' });
 
-    // Value
-    doc.setTextColor(...COLORS.primary);
+    // Value (large, bold)
+    doc.setTextColor(...COLORS.navy);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text(String(primaryResult.value), pageWidth / 2, currentY + 18, { align: 'center' });
+    doc.setFontSize(22);
+    doc.text(String(highlightedResult.value), pageWidth / 2, currentY + 20, { align: 'center' });
+
+    // Subvalue if exists
+    if (highlightedResult.subValue) {
+      doc.setTextColor(...COLORS.mutedText);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text(highlightedResult.subValue, pageWidth / 2, currentY + 25, { align: 'center' });
+    }
 
     currentY += 35;
   }
 
-  // ===== DATA TABLES =====
+  // Results table
+  const resultsData = config.results
+    .filter(r => !r.highlight) // Exclude highlighted (already shown above)
+    .map(result => [
+      result.label,
+      result.subValue ? `${result.value} (${result.subValue})` : String(result.value),
+    ]);
+
+  if (resultsData.length > 0) {
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Parameter', 'Value']],
+      body: resultsData,
+      margin: { left: margin, right: margin },
+      styles: {
+        fontSize: 10,
+        cellPadding: 5,
+        lineColor: COLORS.border,
+        lineWidth: 0.2,
+      },
+      headStyles: {
+        fillColor: COLORS.navy,
+        textColor: COLORS.white,
+        fontStyle: 'bold',
+        fontSize: 10,
+      },
+      bodyStyles: {
+        textColor: COLORS.darkText,
+      },
+      alternateRowStyles: {
+        fillColor: COLORS.lightBg,
+      },
+      columnStyles: {
+        0: { cellWidth: 85, fontStyle: 'normal' },
+        1: { fontStyle: 'bold', halign: 'right' },
+      },
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 12;
+  }
+
+  // ========== DATA TABLES (if any) ==========
   if (config.tables && config.tables.length > 0) {
     config.tables.forEach(table => {
-      checkPageBreak(40);
-      
+      checkPageBreak(50);
+
+      // Table title
       if (table.title) {
-        drawSectionTitle(table.title);
+        doc.setFillColor(...COLORS.navy);
+        doc.roundedRect(margin, currentY, 3, 8, 1, 1, 'F');
+        doc.setTextColor(...COLORS.navy);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(table.title, margin + 7, currentY + 6);
+        currentY += 12;
       }
 
       autoTable(doc, {
@@ -303,9 +334,11 @@ export function generateCalculatorPDF(config: PDFConfig): void {
         styles: {
           fontSize: 8,
           cellPadding: 3,
+          lineColor: COLORS.border,
+          lineWidth: 0.2,
         },
         headStyles: {
-          fillColor: COLORS.primary,
+          fillColor: COLORS.navy,
           textColor: COLORS.white,
           fontStyle: 'bold',
           fontSize: 8,
@@ -319,75 +352,48 @@ export function generateCalculatorPDF(config: PDFConfig): void {
     });
   }
 
-  // ===== ASSUMPTIONS =====
-  if (config.assumptions && config.assumptions.length > 0) {
-    checkPageBreak(30);
-    drawSectionTitle('Assumptions');
-
-    doc.setTextColor(...COLORS.text);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-
-    config.assumptions.forEach((assumption, index) => {
-      checkPageBreak(8);
-      doc.text(`• ${assumption}`, margin + 4, currentY);
-      currentY += 6;
-    });
-
-    currentY += 5;
-  }
-
-  // ===== INSIGHTS =====
-  if (config.insights && config.insights.length > 0) {
-    checkPageBreak(30);
-    drawSectionTitle('Key Insights');
-
-    doc.setTextColor(...COLORS.text);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-
-    config.insights.forEach((insight, index) => {
-      checkPageBreak(10);
-      const lines = doc.splitTextToSize(`${index + 1}. ${insight}`, pageWidth - margin * 2 - 8);
-      doc.text(lines, margin + 4, currentY);
-      currentY += lines.length * 5 + 3;
-    });
-  }
-
-  // ===== CTA SECTION =====
-  checkPageBreak(35);
+  // ========== CALL TO ACTION ==========
+  checkPageBreak(40);
   currentY += 5;
 
-  // CTA Box
-  doc.setFillColor(...COLORS.primary);
-  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 28, 3, 3, 'F');
+  // CTA Box with gradient effect
+  doc.setFillColor(...COLORS.navy);
+  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 30, 4, 4, 'F');
 
+  // Gold accent on top of CTA
+  doc.setFillColor(...COLORS.gold);
+  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 3, 4, 4, 'F');
+  doc.setFillColor(...COLORS.navy);
+  doc.rect(margin, currentY + 2, pageWidth - margin * 2, 1, 'F');
+
+  // CTA Text
   doc.setTextColor(...COLORS.white);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text('Need Personalized Financial Advice?', pageWidth / 2, currentY + 10, { align: 'center' });
+  doc.text('Need Help Planning Your Financial Future?', pageWidth / 2, currentY + 12, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text('Book a FREE consultation with our experts to create a customized financial plan.', pageWidth / 2, currentY + 17, { align: 'center' });
+  doc.text('Book a FREE consultation with our experts', pageWidth / 2, currentY + 19, { align: 'center' });
 
-  doc.setTextColor(...COLORS.accent);
+  doc.setTextColor(...COLORS.gold);
   doc.setFont('helvetica', 'bold');
-  doc.text(`Call: ${COMPANY.phone} | Email: ${COMPANY.email}`, pageWidth / 2, currentY + 24, { align: 'center' });
+  doc.setFontSize(10);
+  doc.text(`📞 ${COMPANY.phone}  |  ✉️ ${COMPANY.email}`, pageWidth / 2, currentY + 26, { align: 'center' });
 
-  // ===== DRAW FOOTERS ON ALL PAGES =====
+  // ========== DRAW FOOTERS ==========
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     drawFooter(i, totalPages);
   }
 
-  // ===== SAVE PDF =====
+  // ========== SAVE ==========
   const fileName = `${config.calculatorName.replace(/\s+/g, '_')}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
   doc.save(fileName);
 }
 
-// Helper to format currency for PDF
+// Currency formatter for PDFs
 export function formatCurrencyPDF(amount: number): string {
   if (amount >= 10000000) {
     return `₹${(amount / 10000000).toFixed(2)} Cr`;
@@ -396,6 +402,5 @@ export function formatCurrencyPDF(amount: number): string {
   } else if (amount >= 1000) {
     return `₹${amount.toLocaleString('en-IN')}`;
   }
-  return `₹${amount}`;
+  return `₹${Math.round(amount).toLocaleString('en-IN')}`;
 }
-

@@ -75,12 +75,6 @@ export default function SIPDelayCalculator() {
         ]),
       },
     ],
-    insights: [
-      `Delaying your SIP by ${delayPeriod} months costs you ${formatCurrencyPDF(results.costOfDelay)} - that's ${costPercentage}% of your potential wealth!`,
-      `To recover from the ${delayPeriod}-month delay, you'd need to increase your SIP by ₹${results.extraSIPNeeded.toLocaleString('en-IN')}/month (+${extraSIPPercentage}%).`,
-      `Every month of delay costs approximately ${formatCurrencyPDF(Math.round(results.costOfDelay / delayPeriod))} in potential wealth.`,
-      "The best time to start investing was yesterday. The second best time is today!",
-    ],
   };
 
   return (

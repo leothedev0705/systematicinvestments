@@ -97,8 +97,8 @@ export default function RetirementCalculator() {
     { key: "withdrawal", header: "Withdrawal", align: "right" as const, format: (v: number) => formatCurrency(v) },
   ];
 
-  // PDF Configuration
-  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
+  // PDF Configuration - Only user inputs and results
+  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription'> = {
     inputs: [
       { label: "Current Age", value: currentAge, unit: " years" },
       { label: "Retirement Age", value: retirementAge, unit: " years" },
@@ -133,12 +133,6 @@ export default function RetirementCalculator() {
           formatCurrencyPDF(row.withdrawal),
         ]),
       },
-    ],
-    insights: [
-      `You need ${formatCurrencyPDF(results.requiredCorpus)} to maintain your lifestyle from age ${retirementAge} to ${isAdvanced ? lifeExpectancy : 85}.`,
-      `Your current expenses of ₹${monthlyExpenses.toLocaleString('en-IN')}/month will become ${formatCurrencyPDF(results.monthlyExpensesAtRetirement)}/month at retirement due to inflation.`,
-      `Start a monthly SIP of ${formatCurrencyPDF(results.monthlySIP)} today to achieve your retirement goal.`,
-      `You have ${results.yearsToRetirement} years to build your retirement corpus.`,
     ],
   };
 

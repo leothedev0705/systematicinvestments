@@ -77,12 +77,6 @@ export default function VacationCalculator() {
       { label: "Current Budget", value: formatCurrencyPDF(vacationBudget) },
       { label: "Progress", value: `${progressPercentage.toFixed(0)}%` },
     ],
-    insights: [
-      `Save ${formatCurrencyPDF(results.monthlyRequired)} every month to reach your vacation goal in ${monthsToSave} months.`,
-      `That's just ₹${Math.round(results.monthlyRequired / 30).toLocaleString('en-IN')} per day!`,
-      isAdvanced && inflationRate > 0 ? `With ${inflationRate}% travel inflation, your target grows from ₹${vacationBudget.toLocaleString('en-IN')} to ${formatCurrencyPDF(results.futureTarget)}.` : '',
-      "Set up automatic transfers on salary day to stay on track.",
-    ].filter(Boolean) as string[],
   };
 
   return (

@@ -1,382 +1,501 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Target, Shield, Briefcase, Users, TrendingUp } from "lucide-react";
-import {
-  CalculatorLayout,
-  SliderInput,
-  NumberInput,
-  SelectInput,
-  ViewToggle,
-  ResultCard,
-} from "@/components/calculators/CalculatorLayout";
-import { GaugeChart, PieChart } from "@/components/calculators/Charts";
-import { calculateRiskProfile, type RiskAssessmentAnswers } from "@/lib/calculations";
-import { type PDFConfig } from "@/lib/pdfGenerator";
-import { motion } from "framer-motion";
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { ArrowLeft, CheckCircle2, AlertCircle, Shield, TrendingUp, Wallet, PieChart, RotateCcw, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { riskQuestions, riskProfiles } from "@/constants/riskQuestions";
+import { calculateRiskProfile, getAnsweredCount, isComplete } from "@/lib/calculators/risk-appetite";
+import { generateCalculatorPDF, formatCurrencyPDF } from "@/lib/pdfGenerator";
 
-const riskToleranceOptions = [
-  { value: 1, label: "Very Low - I can't tolerate any loss" },
-  { value: 2, label: "Low - I can accept up to 10% loss" },
-  { value: 3, label: "Moderate - I can accept up to 20% loss" },
-  { value: 4, label: "High - I can accept up to 30% loss" },
-  { value: 5, label: "Very High - I can accept 40%+ loss" },
-];
+export default function RiskAppetitePage() {
+  const [answers, setAnswers] = useState<Record<number, any>>({
+    1: 30, // Default age
+  });
+  const [showResults, setShowResults] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    "Personal Information": true,
+    "Financial Situation": true,
+    "Investment Experience": true,
+    "Risk Behavior": true,
+    "Investment Goals": true,
+    "Past Experience": true,
+    "Final Assessment": true,
+  });
 
-const incomeStabilityOptions = [
-  { value: 1, label: "Very Unstable - Irregular income" },
-  { value: 2, label: "Somewhat Unstable - Freelance/Contract" },
-  { value: 3, label: "Moderate - Small business owner" },
-  { value: 4, label: "Stable - Salaried employee" },
-  { value: 5, label: "Very Stable - Government/PSU job" },
-];
-
-const investmentExperienceOptions = [
-  { value: 1, label: "Beginner - No experience" },
-  { value: 2, label: "Basic - FDs and Savings only" },
-  { value: 3, label: "Intermediate - Mutual Funds" },
-  { value: 4, label: "Advanced - Direct Equity" },
-  { value: 5, label: "Expert - Derivatives/F&O" },
-];
-
-const behavioralQuestions = [
-  {
-    question: "If your investment drops 20% in a month, what would you do?",
-    options: [
-      { value: 1, label: "Sell everything immediately" },
-      { value: 2, label: "Sell half and keep half" },
-      { value: 3, label: "Hold and wait" },
-      { value: 4, label: "Buy more if fundamentals are strong" },
-    ],
-  },
-  {
-    question: "How would you describe your investment goal?",
-    options: [
-      { value: 1, label: "Preserve capital at all costs" },
-      { value: 2, label: "Generate steady income" },
-      { value: 3, label: "Balanced growth and income" },
-      { value: 4, label: "Maximize long-term growth" },
-    ],
-  },
-  {
-    question: "What percentage of your income can you invest monthly?",
-    options: [
-      { value: 1, label: "Less than 10%" },
-      { value: 2, label: "10-20%" },
-      { value: 3, label: "20-30%" },
-      { value: 4, label: "More than 30%" },
-    ],
-  },
-  {
-    question: "How do you react to financial news and market volatility?",
-    options: [
-      { value: 1, label: "Very anxious, check constantly" },
-      { value: 2, label: "Somewhat worried" },
-      { value: 3, label: "Aware but not overly concerned" },
-      { value: 4, label: "Calm, focused on long-term" },
-    ],
-  },
-  {
-    question: "What's your primary financial priority right now?",
-    options: [
-      { value: 1, label: "Building emergency fund" },
-      { value: 2, label: "Paying off debts" },
-      { value: 3, label: "Buying a home" },
-      { value: 4, label: "Wealth accumulation" },
-    ],
-  },
-];
-
-export default function RiskAppetiteCalculator() {
-  const [isAdvanced, setIsAdvanced] = useState(false);
-  
-  // Traditional inputs
-  const [age, setAge] = useState(30);
-  const [investmentHorizon, setInvestmentHorizon] = useState(10);
-  const [riskTolerance, setRiskTolerance] = useState(3);
-  
-  // Advanced inputs
-  const [annualIncome, setAnnualIncome] = useState(1200000);
-  const [monthlyExpenses, setMonthlyExpenses] = useState(50000);
-  const [existingInvestments, setExistingInvestments] = useState(500000);
-  const [financialDependents, setFinancialDependents] = useState(2);
-  const [incomeStability, setIncomeStability] = useState(4);
-  const [investmentExperience, setInvestmentExperience] = useState(3);
-  const [behavioralAnswers, setBehavioralAnswers] = useState<number[]>([3, 3, 2, 3, 4]);
+  const answeredCount = getAnsweredCount(answers);
+  const totalQuestions = riskQuestions.length;
+  const progress = (answeredCount / totalQuestions) * 100;
+  const allAnswered = isComplete(answers);
 
   const results = useMemo(() => {
-    const answers: RiskAssessmentAnswers = {
-      age,
-      investmentHorizon,
-      riskTolerance,
-    };
-
-    if (isAdvanced) {
-      answers.incomeStability = incomeStability;
-      answers.investmentExperience = investmentExperience;
-      answers.financialDependents = financialDependents;
-      
-      // Add behavioral question scores
-      const behavioralScore = behavioralAnswers.reduce((sum, ans) => sum + ans, 0) / behavioralAnswers.length;
-      answers.riskTolerance = Math.round((riskTolerance + behavioralScore) / 2);
-    }
-
+    if (!allAnswered) return null;
     return calculateRiskProfile(answers);
-  }, [age, investmentHorizon, riskTolerance, incomeStability, investmentExperience, financialDependents, behavioralAnswers, isAdvanced]);
+  }, [answers, allAnswered]);
 
-  const allocationChartData = [
-    { label: "Equity", value: results.allocation.equity, color: "#EF4444" },
-    { label: "Debt", value: results.allocation.debt, color: "#3B82F6" },
-    { label: "Gold", value: results.allocation.gold, color: "#EAB308" },
-  ];
-
-  // PDF Configuration
-  const pdfConfig: Omit<PDFConfig, 'calculatorName' | 'calculatorDescription' | 'assumptions'> = {
-    inputs: [
-      { label: "Age", value: age, unit: " years" },
-      { label: "Investment Horizon", value: investmentHorizon, unit: " years" },
-      { label: "Risk Tolerance", value: riskToleranceOptions.find(o => o.value === riskTolerance)?.label || "" },
-      ...(isAdvanced ? [
-        { label: "Annual Income", value: `₹${annualIncome.toLocaleString('en-IN')}` },
-        { label: "Monthly Expenses", value: `₹${monthlyExpenses.toLocaleString('en-IN')}` },
-        { label: "Existing Investments", value: `₹${existingInvestments.toLocaleString('en-IN')}` },
-        { label: "Financial Dependents", value: financialDependents },
-        { label: "Income Stability", value: incomeStabilityOptions.find(o => o.value === incomeStability)?.label || "" },
-        { label: "Investment Experience", value: investmentExperienceOptions.find(o => o.value === investmentExperience)?.label || "" },
-      ] : []),
-    ],
-    results: [
-      { label: "Risk Score", value: `${results.score}/100`, highlight: true },
-      { label: "Risk Profile", value: results.profile.category },
-      { label: "Equity Allocation", value: `${results.allocation.equity}%` },
-      { label: "Debt Allocation", value: `${results.allocation.debt}%` },
-      { label: "Gold Allocation", value: `${results.allocation.gold}%` },
-    ],
-    insights: [
-      `Your risk profile is "${results.profile.category}" with a score of ${results.score}/100.`,
-      results.profile.description,
-      `Recommended asset allocation: ${results.allocation.equity}% Equity, ${results.allocation.debt}% Debt, ${results.allocation.gold}% Gold.`,
-      `Suggested investment products: ${results.suggestedProducts.join(', ')}.`,
-    ],
+  const setAnswer = (questionId: number, value: any) => {
+    setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
 
+  const toggleCheckbox = (questionId: number, value: string, checked: boolean) => {
+    setAnswers(prev => {
+      const current = prev[questionId] || [];
+      if (checked) {
+        return { ...prev, [questionId]: [...current, value] };
+      } else {
+        return { ...prev, [questionId]: current.filter((v: string) => v !== value) };
+      }
+    });
+  };
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  const resetAssessment = () => {
+    setAnswers({ 1: 30 });
+    setShowResults(false);
+  };
+
+  const handleDownloadPDF = () => {
+    if (!results) return;
+
+    // Get answer labels for PDF
+    const inputsForPDF = riskQuestions.map(q => {
+      const answer = answers[q.id];
+      let displayValue = '';
+      
+      if (q.type === 'slider') {
+        displayValue = `${answer} ${q.unit || ''}`;
+      } else if (q.type === 'checkbox' && Array.isArray(answer)) {
+        const labels = answer.map(v => q.options?.find(o => o.value === v)?.label || v);
+        displayValue = labels.join(', ') || 'None selected';
+      } else {
+        const option = q.options?.find(o => o.value === answer);
+        displayValue = option?.label || String(answer || 'Not answered');
+      }
+
+      return {
+        label: q.question,
+        value: displayValue,
+      };
+    });
+
+    generateCalculatorPDF({
+      calculatorName: 'Risk Appetite Assessment',
+      inputs: inputsForPDF,
+      results: [
+        { label: 'Risk Profile', value: results.profileName, highlight: true },
+        { label: 'Risk Score', value: `${Math.round(results.percentageScore)}/100` },
+        { label: 'Recommended Equity', value: `${results.assetAllocation.equity}%` },
+        { label: 'Recommended Debt', value: `${results.assetAllocation.debt}%` },
+        { label: 'Recommended Gold', value: `${results.assetAllocation.gold}%` },
+        { label: 'Recommended Cash', value: `${results.assetAllocation.cash}%` },
+        { label: 'Suggested Products', value: results.products.join(', ') },
+      ],
+    });
+  };
+
+  // Group questions by category
+  const questionsByCategory = riskQuestions.reduce((acc, question) => {
+    if (!acc[question.category]) {
+      acc[question.category] = [];
+    }
+    acc[question.category].push(question);
+    return acc;
+  }, {} as Record<string, typeof riskQuestions>);
+
+  const categories = Object.keys(questionsByCategory);
+
   return (
-    <CalculatorLayout
-      title="Risk Appetite Calculator"
-      description="Discover your risk profile and get personalized asset allocation"
-      icon={<Target className="w-7 h-7 text-white" />}
-      color="from-red-500 to-orange-500"
-      assumptions={[
-        "Risk profile is indicative and for educational purposes",
-        "Asset allocation should be reviewed periodically",
-        "Individual circumstances may require different approaches",
-        "Consult a financial advisor for personalized advice",
-      ]}
-      howItWorks="This calculator assesses your risk tolerance based on age, investment horizon, and personal preferences. It uses a weighted scoring system that considers factors like income stability, existing wealth, and behavioral tendencies to determine your risk profile and suggest an appropriate asset allocation."
-      relatedCalculators={[
-        { name: "SIP Calculator", href: "/tools/sip" },
-        { name: "Retirement Calculator", href: "/tools/retirement" },
-        { name: "SWP Calculator", href: "/tools/swp" },
-      ]}
-      pdfConfig={pdfConfig}
-      results={
-        <div className="space-y-6">
-          {/* Risk Profile Gauge */}
-          <div className="flex justify-center py-4">
-            <GaugeChart
-              value={results.score}
-              color={results.profile.color}
-              label={results.profile.category}
-            />
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link 
+              href="/tools" 
+              className="flex items-center gap-2 text-slate-600 hover:text-navy-700 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back to Tools</span>
+            </Link>
+            
+            {allAnswered && results && (
+              <button
+                onClick={handleDownloadPDF}
+                className="flex items-center gap-2 px-4 py-2 bg-navy-700 text-white rounded-xl hover:bg-navy-800 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Download Report
+              </button>
+            )}
           </div>
 
-          {/* Profile Description */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-background rounded-xl p-4"
-          >
-            <p className="text-sm text-navy-700 leading-relaxed">
-              {results.profile.description}
-            </p>
-          </motion.div>
-
-          {/* Asset Allocation */}
-          <div className="bg-background rounded-xl p-4">
-            <h3 className="text-sm font-medium text-navy-700 mb-4 text-center">
-              Recommended Asset Allocation
-            </h3>
-            <PieChart data={allocationChartData} size={180} innerRadius={50} />
-          </div>
-
-          {/* Allocation Breakdown */}
-          <div className="grid grid-cols-3 gap-3">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="bg-red-50 border border-red-100 rounded-xl p-3 text-center"
-            >
-              <TrendingUp className="w-5 h-5 text-red-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-red-600">{results.allocation.equity}%</p>
-              <p className="text-xs text-red-700">Equity</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center"
-            >
-              <Shield className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-blue-600">{results.allocation.debt}%</p>
-              <p className="text-xs text-blue-700">Debt</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="bg-yellow-50 border border-yellow-100 rounded-xl p-3 text-center"
-            >
-              <Briefcase className="w-5 h-5 text-yellow-600 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-yellow-600">{results.allocation.gold}%</p>
-              <p className="text-xs text-yellow-700">Gold</p>
-            </motion.div>
-          </div>
-
-          {/* Suggested Products */}
-          <div className="bg-background rounded-xl p-4">
-            <h3 className="text-sm font-medium text-navy-700 mb-3">Suggested Investment Products</h3>
-            <div className="flex flex-wrap gap-2">
-              {results.suggestedProducts.map((product, i) => (
-                <motion.span
-                  key={product}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 * i }}
-                  className="px-3 py-1.5 bg-white border border-card-border rounded-full text-sm text-navy-700"
-                >
-                  {product}
-                </motion.span>
-              ))}
+          {/* Progress bar */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-slate-700">
+                {answeredCount} of {totalQuestions} questions answered
+              </span>
+              <span className="text-sm font-medium text-accent">
+                {Math.round(progress)}% complete
+              </span>
+            </div>
+            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-accent to-amber-400"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.3 }}
+              />
             </div>
           </div>
         </div>
-      }
-    >
-      <ViewToggle isAdvanced={isAdvanced} onToggle={setIsAdvanced} />
+      </div>
 
-      <SliderInput
-        label="Your Age"
-        value={age}
-        onChange={setAge}
-        min={18}
-        max={80}
-        unit=" years"
-      />
-
-      <SliderInput
-        label="Investment Horizon"
-        value={investmentHorizon}
-        onChange={setInvestmentHorizon}
-        min={1}
-        max={30}
-        unit=" years"
-      />
-
-      <SelectInput
-        label="Risk Tolerance"
-        value={riskTolerance}
-        onChange={(v) => setRiskTolerance(Number(v))}
-        options={riskToleranceOptions}
-      />
-
-      {isAdvanced && (
-        <>
-          <div className="border-t border-card-border my-6 pt-6">
-            <h3 className="text-sm font-medium text-navy-700 mb-4 flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-accent" />
-              Financial Details
-            </h3>
-
-            <NumberInput
-              label="Annual Income"
-              value={annualIncome}
-              onChange={setAnnualIncome}
-              prefix="₹"
-            />
-
-            <NumberInput
-              label="Monthly Expenses"
-              value={monthlyExpenses}
-              onChange={setMonthlyExpenses}
-              prefix="₹"
-            />
-
-            <NumberInput
-              label="Existing Investments"
-              value={existingInvestments}
-              onChange={setExistingInvestments}
-              prefix="₹"
-            />
-
-            <SliderInput
-              label="Financial Dependents"
-              value={financialDependents}
-              onChange={setFinancialDependents}
-              min={0}
-              max={10}
-              unit=" people"
-            />
-
-            <SelectInput
-              label="Income Stability"
-              value={incomeStability}
-              onChange={(v) => setIncomeStability(Number(v))}
-              options={incomeStabilityOptions}
-            />
-
-            <SelectInput
-              label="Investment Experience"
-              value={investmentExperience}
-              onChange={(v) => setInvestmentExperience(Number(v))}
-              options={investmentExperienceOptions}
-            />
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Title */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-navy-700 to-navy-900 mb-4">
+            <Shield className="w-8 h-8 text-white" />
           </div>
+          <h1 className="text-3xl font-heading font-bold text-navy-700 mb-2">
+            Risk Appetite Assessment
+          </h1>
+          <p className="text-slate-600 max-w-xl mx-auto">
+            Answer these 20 questions to discover your investment risk profile and get personalized asset allocation recommendations.
+          </p>
+        </motion.div>
 
-          <div className="border-t border-card-border my-6 pt-6">
-            <h3 className="text-sm font-medium text-navy-700 mb-4 flex items-center gap-2">
-              <Users className="w-4 h-4 text-accent" />
-              Behavioral Assessment
-            </h3>
+        {/* Questions by Category */}
+        <div className="space-y-6">
+          {categories.map((category, catIndex) => (
+            <motion.div
+              key={category}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: catIndex * 0.1 }}
+              className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm"
+            >
+              {/* Category Header */}
+              <button
+                onClick={() => toggleCategory(category)}
+                className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-navy-700 text-white flex items-center justify-center text-sm font-bold">
+                    {catIndex + 1}
+                  </div>
+                  <h2 className="text-lg font-semibold text-navy-700">{category}</h2>
+                  <span className="text-sm text-slate-500">
+                    ({questionsByCategory[category].length} questions)
+                  </span>
+                </div>
+                {expandedCategories[category] ? (
+                  <ChevronUp className="w-5 h-5 text-slate-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-slate-500" />
+                )}
+              </button>
 
-            {behavioralQuestions.map((q, i) => (
-              <div key={i} className="mb-6">
-                <p className="text-sm text-navy-700 mb-2">{q.question}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {q.options.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => {
-                        const newAnswers = [...behavioralAnswers];
-                        newAnswers[i] = opt.value;
-                        setBehavioralAnswers(newAnswers);
-                      }}
-                      className={`px-3 py-2 text-xs rounded-lg border transition-colors text-left ${
-                        behavioralAnswers[i] === opt.value
-                          ? "border-accent bg-accent/10 text-accent-dark"
-                          : "border-card-border hover:border-accent/50"
-                      }`}
+              {/* Questions */}
+              <AnimatePresence>
+                {expandedCategories[category] && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-4 space-y-6">
+                      {questionsByCategory[category].map((question, qIndex) => {
+                        const isAnswered = answers[question.id] !== undefined && 
+                          (Array.isArray(answers[question.id]) ? answers[question.id].length > 0 : true);
+                        
+                        return (
+                          <div
+                            key={question.id}
+                            className={`p-4 rounded-xl border transition-all ${
+                              isAnswered 
+                                ? 'border-green-200 bg-green-50/50' 
+                                : 'border-slate-200 bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-start gap-4">
+                              <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                                isAnswered 
+                                  ? 'bg-green-500 text-white' 
+                                  : 'bg-slate-200 text-slate-600'
+                              }`}>
+                                {isAnswered ? <CheckCircle2 className="w-5 h-5" /> : question.id}
+                              </span>
+                              
+                              <div className="flex-1">
+                                <h3 className="text-base font-semibold text-navy-700 mb-4">
+                                  {question.question}
+                                </h3>
+
+                                {/* Slider Input */}
+                                {question.type === 'slider' && (
+                                  <div className="space-y-3">
+                                    <input
+                                      type="range"
+                                      min={question.min}
+                                      max={question.max}
+                                      value={answers[question.id] || question.default}
+                                      onChange={(e) => setAnswer(question.id, parseInt(e.target.value))}
+                                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-accent"
+                                    />
+                                    <div className="flex justify-between text-sm">
+                                      <span className="text-slate-500">{question.min} {question.unit}</span>
+                                      <span className="font-bold text-navy-700 text-lg">
+                                        {answers[question.id] || question.default} {question.unit}
+                                      </span>
+                                      <span className="text-slate-500">{question.max} {question.unit}</span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Radio Input */}
+                                {question.type === 'radio' && (
+                                  <div className="space-y-2">
+                                    {question.options?.map((option) => (
+                                      <label
+                                        key={option.value}
+                                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                                          answers[question.id] === option.value
+                                            ? 'border-accent bg-accent/10'
+                                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                        }`}
+                                      >
+                                        <input
+                                          type="radio"
+                                          name={`question-${question.id}`}
+                                          value={option.value}
+                                          checked={answers[question.id] === option.value}
+                                          onChange={() => setAnswer(question.id, option.value)}
+                                          className="w-4 h-4 text-accent focus:ring-accent"
+                                        />
+                                        <span className={`text-sm ${
+                                          answers[question.id] === option.value
+                                            ? 'font-medium text-navy-700'
+                                            : 'text-slate-700'
+                                        }`}>
+                                          {option.label}
+                                        </span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Checkbox Input */}
+                                {question.type === 'checkbox' && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {question.options?.map((option) => {
+                                      const isChecked = answers[question.id]?.includes(option.value);
+                                      return (
+                                        <label
+                                          key={option.value}
+                                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                                            isChecked
+                                              ? 'border-accent bg-accent/10'
+                                              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                          }`}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={(e) => toggleCheckbox(question.id, option.value, e.target.checked)}
+                                            className="w-4 h-4 text-accent rounded focus:ring-accent"
+                                          />
+                                          <span className={`text-sm ${
+                                            isChecked
+                                              ? 'font-medium text-navy-700'
+                                              : 'text-slate-700'
+                                          }`}>
+                                            {option.label}
+                                          </span>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Results Section */}
+        {allAnswered && results && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8"
+          >
+            <div className="bg-gradient-to-br from-navy-700 to-navy-900 rounded-3xl p-8 text-white">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-heading font-bold mb-2">Your Risk Profile</h2>
+                <p className="text-slate-300">Based on your responses</p>
+              </div>
+
+              {/* Risk Score Gauge */}
+              <div className="flex flex-col items-center mb-8">
+                <div className="relative w-48 h-24 mb-4">
+                  <svg viewBox="0 0 200 100" className="w-full h-full">
+                    {/* Background arc */}
+                    <path
+                      d="M 10 100 A 90 90 0 0 1 190 100"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.2)"
+                      strokeWidth="20"
+                      strokeLinecap="round"
+                    />
+                    {/* Colored arc */}
+                    <path
+                      d="M 10 100 A 90 90 0 0 1 190 100"
+                      fill="none"
+                      stroke={results.profileColor}
+                      strokeWidth="20"
+                      strokeLinecap="round"
+                      strokeDasharray={`${(results.percentageScore / 100) * 283} 283`}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-end justify-center pb-2">
+                    <span className="text-4xl font-bold">{Math.round(results.percentageScore)}</span>
+                    <span className="text-lg ml-1">/100</span>
+                  </div>
+                </div>
+                
+                <div 
+                  className="px-6 py-2 rounded-full font-bold text-lg"
+                  style={{ backgroundColor: results.profileColor }}
+                >
+                  {results.profileName}
+                </div>
+              </div>
+
+              <p className="text-center text-slate-200 max-w-2xl mx-auto mb-8">
+                {results.profileDescription}
+              </p>
+
+              {/* Asset Allocation */}
+              <div className="bg-white/10 rounded-2xl p-6 mb-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <PieChart className="w-5 h-5" />
+                  Recommended Asset Allocation
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="bg-white/10 rounded-xl p-4 text-center">
+                    <div className="text-3xl font-bold text-emerald-400">{results.assetAllocation.equity}%</div>
+                    <div className="text-sm text-slate-300">Equity</div>
+                  </div>
+                  <div className="bg-white/10 rounded-xl p-4 text-center">
+                    <div className="text-3xl font-bold text-blue-400">{results.assetAllocation.debt}%</div>
+                    <div className="text-sm text-slate-300">Debt</div>
+                  </div>
+                  <div className="bg-white/10 rounded-xl p-4 text-center">
+                    <div className="text-3xl font-bold text-amber-400">{results.assetAllocation.gold}%</div>
+                    <div className="text-sm text-slate-300">Gold</div>
+                  </div>
+                  <div className="bg-white/10 rounded-xl p-4 text-center">
+                    <div className="text-3xl font-bold text-slate-300">{results.assetAllocation.cash}%</div>
+                    <div className="text-sm text-slate-300">Cash</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommended Products */}
+              <div className="bg-white/10 rounded-2xl p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Wallet className="w-5 h-5" />
+                  Suggested Investment Products
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {results.products.map((product, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 bg-white/20 rounded-full text-sm font-medium"
                     >
-                      {opt.label}
-                    </button>
+                      {product}
+                    </span>
                   ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </>
-      )}
-    </CalculatorLayout>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <button
+                  onClick={handleDownloadPDF}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-accent text-navy-900 rounded-xl font-semibold hover:bg-amber-400 transition-colors"
+                >
+                  <Download className="w-5 h-5" />
+                  Download Report
+                </button>
+                <button
+                  onClick={resetAssessment}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white/10 text-white rounded-xl font-semibold hover:bg-white/20 transition-colors"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                  Retake Assessment
+                </button>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="mt-6 bg-gradient-to-r from-accent/20 to-amber-100 rounded-2xl p-6 border border-accent/30">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-navy-700">Need personalized advice?</h3>
+                  <p className="text-slate-600">Our experts can help create a customized portfolio based on your risk profile.</p>
+                </div>
+                <Link
+                  href="/book-review"
+                  className="px-6 py-3 bg-navy-700 text-white rounded-xl font-semibold hover:bg-navy-800 transition-colors whitespace-nowrap"
+                >
+                  Book Free Consultation
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Show message if not complete */}
+        {!allAnswered && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-8 bg-amber-50 border border-amber-200 rounded-2xl p-6"
+          >
+            <div className="flex items-start gap-4">
+              <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-amber-800">Complete all questions to see your results</h3>
+                <p className="text-amber-700 text-sm mt-1">
+                  You have answered {answeredCount} out of {totalQuestions} questions. 
+                  Please answer all questions to get your personalized risk profile.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
   );
 }
-

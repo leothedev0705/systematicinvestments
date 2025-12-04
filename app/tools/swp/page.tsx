@@ -129,16 +129,6 @@ export default function SWPCalculator() {
         ]),
       },
     ] : [],
-    insights: [
-      results.willLastForever 
-        ? `Your corpus is sustainable indefinitely! Your returns exceed your withdrawals.`
-        : `Your corpus of ${formatCurrencyPDF(investmentAmount)} will last for ${results.yearsLasting} years and ${results.remainingMonths} months.`,
-      `You can withdraw a total of ${formatCurrencyPDF(results.totalWithdrawn)} over the corpus lifetime.`,
-      results.finalAmount > 0 
-        ? `Final remaining amount after ${results.monthsLasting} months: ${formatCurrencyPDF(results.finalAmount)}`
-        : `Corpus will be fully exhausted.`,
-      `Current withdrawal rate: ${((monthlyWithdrawal * 12 / investmentAmount) * 100).toFixed(2)}% per year.`,
-    ],
   };
 
   return (

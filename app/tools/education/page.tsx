@@ -117,12 +117,6 @@ export default function EducationCalculator() {
         ]),
       },
     ] : [],
-    insights: [
-      `Your child's education will cost approximately ${formatCurrencyPDF(results.futureCost)} when they turn ${educationStartAge}.`,
-      `Start a monthly SIP of ${formatCurrencyPDF(results.adjustedMonthly)} to reach your education goal.`,
-      `Alternatively, invest a lumpsum of ${formatCurrencyPDF(results.adjustedLumpsum)} today.`,
-      `Education inflation of ${isAdvanced ? educationInflation : 10}% means costs will be ${results.costMultiplier}x higher in ${results.yearsToEducation} years.`,
-    ],
   };
 
   return (
