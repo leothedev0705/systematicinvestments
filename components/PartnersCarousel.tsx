@@ -82,7 +82,7 @@ export default function PartnersCarousel() {
                         src={partner.logo}
                         alt={partner.name}
                         fill
-                        className="object-contain filter grayscale group-hover:grayscale-0 transition-all duration-500"
+                        className="object-contain transition-all duration-500"
                         sizes="(max-width: 768px) 120px, 160px"
                       />
                     </div>

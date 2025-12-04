@@ -158,7 +158,7 @@ export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
               if (ctx) {
                 ctx.drawImage(img, 0, 0);
                 const dataUrl = canvas.toDataURL('image/png');
-                const imgWidth = 20; // Fixed width for partner logos
+                const imgWidth = 25; // Fixed width for partner logos
                 const imgHeight = (img.height / img.width) * imgWidth;
                 resolve({ data: dataUrl, width: imgWidth, height: imgHeight });
               } else {
@@ -188,32 +188,34 @@ export async function generateCalculatorPDF(config: PDFConfig): Promise<void> {
 
   // ========== FOOTER WITH LOGO AND PARTNER IMAGES ==========
   const drawFooter = (logoData: string | null, lWidth: number, lHeight: number, partners: PartnerImageData[]) => {
-    const footerY = pageHeight - 15;
-    const partnerLogoHeight = 12; // Height for partner logos
-    const spacing = 3; // Spacing between partner logos
-    const logoSpacing = 8; // Spacing between logo and partner images
+    const footerY = pageHeight - 10;
+    const partnerLogoHeight = 15; // Height for partner logos
+    const spacing = 4; // Spacing between partner logos
+    const logoSpacing = 6; // Spacing between logo and partner images
 
-    // Calculate total width needed for partner images
-    const totalPartnerWidth = partners.reduce((sum, img) => sum + img.width + spacing, 0) - spacing;
-    const startX = (pageWidth - totalPartnerWidth) / 2;
+    // Draw partner images first (above logo)
+    if (partners.length > 0) {
+      // Calculate total width needed for partner images
+      const totalPartnerWidth = partners.reduce((sum, img) => sum + img.width + spacing, 0) - spacing;
+      const startX = (pageWidth - totalPartnerWidth) / 2;
 
-    // Draw partner images
-    let currentX = startX;
-    partners.forEach((partner) => {
-      try {
-        const partnerY = footerY - partnerLogoHeight - (logoData && lWidth > 0 && lHeight > 0 ? lHeight + logoSpacing : 0);
-        doc.addImage(partner.data, 'PNG', currentX, partnerY, partner.width, partner.height);
-        currentX += partner.width + spacing;
-      } catch (error) {
-        // Silently fail
-      }
-    });
+      let currentX = startX;
+      partners.forEach((partner) => {
+        try {
+          const partnerY = footerY - (logoData && lWidth > 0 && lHeight > 0 ? lHeight + logoSpacing : 0) - partner.height;
+          doc.addImage(partner.data, 'PNG', currentX, partnerY, partner.width, partner.height);
+          currentX += partner.width + spacing;
+        } catch (error) {
+          // Silently fail
+        }
+      });
+    }
 
-    // Draw company logo
+    // Draw company logo at the very bottom
     if (logoData && lWidth > 0 && lHeight > 0) {
       try {
         const logoX = (pageWidth - lWidth) / 2;
-        const logoY = footerY - lHeight - (partners.length > 0 ? partnerLogoHeight + logoSpacing : 0);
+        const logoY = footerY - lHeight;
         doc.addImage(logoData, 'PNG', logoX, logoY, lWidth, lHeight);
       } catch (error) {
         // Silently fail
