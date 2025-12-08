@@ -2,18 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-
-const navLinks = [
-  { name: "About", href: "#about" },
-  { name: "Services", href: "#services" },
-  { name: "Process", href: "#process" },
-  { name: "Team", href: "#team" },
-  { name: "Contact", href: "#contact" },
-];
+import { usePathname } from "next/navigation";
 
 const externalLinks = [
   { name: "Updates", href: "/updates" },
@@ -25,6 +18,8 @@ const externalLinks = [
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,14 +28,6 @@ export const Navbar: React.FC = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-    setIsMobileMenuOpen(false);
-  };
 
   return (
     <>
@@ -58,41 +45,44 @@ export const Navbar: React.FC = () => {
         <div className="container-custom">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <motion.a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className="flex items-center group"
-              whileHover={{ scale: 1.02 }}
-            >
-              <Image
-                src="/images/logo.png"
-                alt="Systematic Investment"
-                width={180}
-                height={60}
-                className="h-12 sm:h-14 w-auto object-contain"
-                priority
-              />
-            </motion.a>
+            <Link href="/" className="flex items-center group">
+              <motion.div whileHover={{ scale: 1.02 }}>
+                <Image
+                  src="/images/logo.png"
+                  alt="Systematic Investment"
+                  width={180}
+                  height={60}
+                  className="h-12 sm:h-14 w-auto object-contain"
+                  priority
+                />
+              </motion.div>
+            </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <button
-                  key={link.name}
-                  onClick={() => scrollToSection(link.href)}
-                  className="px-3 py-2 text-sm font-medium text-navy-700 hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
-                >
-                  {link.name}
-                </button>
-              ))}
+              {/* Home Link */}
+              <Link
+                href="/"
+                className={cn(
+                  "px-3 py-2 text-sm font-medium transition-colors rounded-lg flex items-center gap-1.5",
+                  isHomePage 
+                    ? "text-primary bg-primary/10" 
+                    : "text-navy-700 hover:text-primary hover:bg-primary/5"
+                )}
+              >
+                <Home className="w-4 h-4" />
+                Home
+              </Link>
               {externalLinks.map((link) => (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="px-3 py-2 text-sm font-medium text-accent hover:text-accent-dark transition-colors rounded-lg hover:bg-accent/10"
+                  className={cn(
+                    "px-3 py-2 text-sm font-medium transition-colors rounded-lg",
+                    pathname === link.href
+                      ? "text-accent-dark bg-accent/20"
+                      : "text-accent hover:text-accent-dark hover:bg-accent/10"
+                  )}
                 >
                   {link.name}
                 </Link>
@@ -139,64 +129,77 @@ export const Navbar: React.FC = () => {
           >
             <div className="bg-white/98 backdrop-blur-lg border-b border-card-border shadow-elevated mx-4 rounded-2xl overflow-hidden">
               <div className="py-4 px-2">
-                {navLinks.map((link, index) => (
-                  <motion.button
-                    key={link.name}
+                {/* Home Link */}
+                <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                  <motion.span
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => scrollToSection(link.href)}
-                    className="w-full px-4 py-3 text-left text-base font-medium text-navy-700 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                    transition={{ delay: 0 }}
+                    className={cn(
+                      "w-full px-4 py-3 text-left text-base font-medium rounded-xl transition-colors inline-flex items-center gap-2",
+                      isHomePage ? "text-primary bg-primary/10" : "text-navy-700 hover:text-primary hover:bg-primary/5"
+                    )}
                   >
-                    {link.name}
-                  </motion.button>
-                ))}
+                    🏠 Home
+                  </motion.span>
+                </Link>
                 <Link href="/updates" onClick={() => setIsMobileMenuOpen(false)}>
                   <motion.span
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: navLinks.length * 0.05 }}
-                    className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
+                    transition={{ delay: 0.05 }}
+                    className={cn(
+                      "w-full px-4 py-3 text-left text-base font-medium rounded-xl transition-colors inline-block",
+                      pathname === "/updates" ? "text-accent-dark bg-accent/20" : "text-accent hover:bg-accent/10"
+                    )}
                   >
-                    📢 Updates & Bonds
+                    📢 Updates
                   </motion.span>
                 </Link>
                 <Link href="/learn" onClick={() => setIsMobileMenuOpen(false)}>
                   <motion.span
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: (navLinks.length + 1) * 0.05 }}
-                    className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
+                    transition={{ delay: 0.1 }}
+                    className={cn(
+                      "w-full px-4 py-3 text-left text-base font-medium rounded-xl transition-colors inline-block",
+                      pathname === "/learn" ? "text-accent-dark bg-accent/20" : "text-accent hover:bg-accent/10"
+                    )}
                   >
-                    🎓 Learn Finance
+                    🎓 Learn
                   </motion.span>
                 </Link>
                 <Link href="/tools" onClick={() => setIsMobileMenuOpen(false)}>
                   <motion.span
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: (navLinks.length + 2) * 0.05 }}
-                    className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
+                    transition={{ delay: 0.15 }}
+                    className={cn(
+                      "w-full px-4 py-3 text-left text-base font-medium rounded-xl transition-colors inline-block",
+                      pathname === "/tools" || pathname?.startsWith("/tools/") ? "text-accent-dark bg-accent/20" : "text-accent hover:bg-accent/10"
+                    )}
                   >
-                    📊 Financial Tools
+                    📊 Tools
                   </motion.span>
                 </Link>
                 <Link href="/blogs" onClick={() => setIsMobileMenuOpen(false)}>
                   <motion.span
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: (navLinks.length + 3) * 0.05 }}
-                    className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
+                    transition={{ delay: 0.2 }}
+                    className={cn(
+                      "w-full px-4 py-3 text-left text-base font-medium rounded-xl transition-colors inline-block",
+                      pathname === "/blogs" || pathname?.startsWith("/blogs/") ? "text-accent-dark bg-accent/20" : "text-accent hover:bg-accent/10"
+                    )}
                   >
-                    📰 Insights & News
+                    📰 Insights
                   </motion.span>
                 </Link>
-                <Link href="/book-review" className="w-full mt-2">
+                <Link href="/book-review" className="w-full mt-2" onClick={() => setIsMobileMenuOpen(false)}>
                   <motion.span
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: navLinks.length * 0.05 }}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    transition={{ delay: 0.25 }}
                     className="w-full btn-accent justify-center inline-flex"
                   >
                     Book Free Review
