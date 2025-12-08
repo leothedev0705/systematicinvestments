@@ -19,8 +19,8 @@ function writeSettings(data: Record<string, unknown>) {
   fs.writeFileSync(SETTINGS_FILE, JSON.stringify(data, null, 2));
 }
 
-// Get current password (for validation)
-export function getAdminPassword(): string {
+// Get current password (for validation) - internal function, not exported
+function getAdminPassword(): string {
   const settings = readSettings();
   // If custom password is set in settings, use it; otherwise fall back to env
   return settings.adminPassword || process.env.CMS_PASSWORD || "systematic2024";
