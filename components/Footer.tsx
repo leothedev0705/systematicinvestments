@@ -2,15 +2,28 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Phone, Mail, MapPin, ArrowUp } from "lucide-react";
+import { Phone, Mail, MapPin, ArrowUp, Calculator, TrendingUp } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const quickLinks = [
   { name: "About", href: "#about" },
   { name: "Services", href: "#services" },
-  { name: "Process", href: "#process" },
   { name: "Team", href: "#team" },
   { name: "Contact", href: "#contact" },
+];
+
+const resourceLinks = [
+  { name: "Updates & Bonds", href: "/updates" },
+  { name: "Learn Finance", href: "/learn" },
+  { name: "Blog & Insights", href: "/blogs" },
+];
+
+const toolsLinks = [
+  { name: "Retirement Calculator", href: "/tools/retirement" },
+  { name: "SIP Calculator", href: "/tools/sip" },
+  { name: "Goal Planner", href: "/tools/goal" },
+  { name: "All Tools", href: "/tools" },
 ];
 
 export const Footer: React.FC = () => {
@@ -78,6 +91,42 @@ export const Footer: React.FC = () => {
                   >
                     {link.name}
                   </button>
+                </li>
+              ))}
+            </ul>
+
+            {/* Resources */}
+            <h3 className="font-heading font-semibold text-white mb-4 mt-6 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-accent" />
+              Resources
+            </h3>
+            <ul className="space-y-3">
+              {resourceLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-white/70 hover:text-accent transition-colors text-sm"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            {/* Financial Tools */}
+            <h3 className="font-heading font-semibold text-white mb-4 mt-6 flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-accent" />
+              Free Tools
+            </h3>
+            <ul className="space-y-3">
+              {toolsLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-white/70 hover:text-accent transition-colors text-sm"
+                  >
+                    {link.name}
+                  </Link>
                 </li>
               ))}
             </ul>

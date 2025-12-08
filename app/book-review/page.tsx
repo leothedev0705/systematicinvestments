@@ -61,7 +61,7 @@ const benefits = [
   {
     icon: TrendingUp,
     title: "Expert Analysis",
-    description: "25+ years of market experience",
+    description: "26+ years of market experience",
   },
   {
     icon: Users,

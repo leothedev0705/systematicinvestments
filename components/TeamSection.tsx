@@ -110,7 +110,7 @@ export const TeamSection: React.FC = () => {
                         <Award className="w-6 h-6 text-primary" />
                       </div>
                       <div>
-                        <p className="text-2xl font-heading font-bold text-primary">25+</p>
+                        <p className="text-2xl font-heading font-bold text-primary">26+</p>
                         <p className="text-xs text-muted">Years Experience</p>
                       </div>
                     </div>
@@ -154,7 +154,7 @@ export const TeamSection: React.FC = () => {
                 <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-5 mb-6 border border-white/10">
                   <Quote className="w-8 h-8 text-accent/40 absolute top-4 right-4" />
                   <p className="text-white/90 italic pr-8">
-                    &quot;Since 1996, my mission has been to help families achieve financial 
+                    &quot;Since 1999, my mission has been to help families achieve financial 
                     independence through disciplined planning and trusted guidance.&quot;
                   </p>
                 </div>

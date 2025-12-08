@@ -84,7 +84,7 @@ export const Hero: React.FC = () => {
             <motion.div variants={itemVariants} className="mb-4">
               <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent-dark rounded-full text-sm font-medium border border-accent/20">
                 <Shield className="w-4 h-4" />
-                Trusted Since 1996
+                Trusted Since 1999
               </span>
             </motion.div>
 

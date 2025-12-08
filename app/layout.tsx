@@ -20,7 +20,7 @@ const sourceSans = Source_Sans_3({
 export const metadata: Metadata = {
   title: "Systematic Investments – Your Partner in Wealth Management",
   description:
-    "Systematic Investments is dedicated to empowering families with tailored financial solutions, built on trust, expertise, and a client-centric approach. 25+ years of experience, 25 Cr+ AUM, 1000+ happy clients.",
+    "Systematic Investments is dedicated to empowering families with tailored financial solutions, built on trust, expertise, and a client-centric approach. 26+ years of experience, 25 Cr+ AUM, 1000+ happy clients.",
   keywords: [
     "wealth management",
     "financial planning",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Systematic Investments – Your Partner in Wealth Management",
     description:
-      "Empowering families with tailored financial solutions. 25+ years of experience, 1000+ happy clients.",
+      "Empowering families with tailored financial solutions. 26+ years of experience, 1000+ happy clients.",
     type: "website",
     locale: "en_IN",
   },

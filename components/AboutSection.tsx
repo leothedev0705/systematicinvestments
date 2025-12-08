@@ -77,9 +77,9 @@ export const AboutSection: React.FC = () => {
             <div className="card-base p-8 h-full">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center">
-                  <span className="text-2xl font-heading font-bold text-accent-dark">96</span>
+                  <span className="text-2xl font-heading font-bold text-accent-dark">99</span>
                 </div>
-                <h3 className="heading-sm">Our Journey Since 1996</h3>
+                <h3 className="heading-sm">Our Journey Since 1999</h3>
               </div>
 
               <p className="text-body mb-6">
@@ -91,7 +91,7 @@ export const AboutSection: React.FC = () => {
               <div className="relative p-6 bg-primary/5 rounded-xl border-l-4 border-accent mb-6">
                 <Quote className="w-8 h-8 text-accent/30 absolute top-4 right-4" />
                 <p className="text-navy-700 italic pr-8">
-                  &quot;Since 1996, his relentless pursuit of excellence and unwavering integrity 
+                  &quot;Since 1999, his relentless pursuit of excellence and unwavering integrity 
                   has sculpted Systematic Investments into a name that truly inspires trust.&quot;
                 </p>
               </div>
@@ -108,4 +108,5 @@ export const AboutSection: React.FC = () => {
     </section>
   );
 };
+
 

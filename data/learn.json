@@ -1,0 +1,354 @@
+{
+  "content": [
+    {
+      "id": "1",
+      "category": "basics",
+      "type": "video",
+      "title": "Personal Finance Basics 1- Where to Start Your Financial Journey",
+      "description": "A comprehensive beginner's guide to personal finance. Learn about savings, budgeting, emergency funds, and creating your first financial plan.",
+      "thumbnail": "https://i.ytimg.com/vi/4j2emMn7UaI/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/4j2emMn7UaI",
+      "duration": "18 min",
+      "level": "Beginner",
+      "views": "1.2M",
+      "rating": 4.8,
+      "instructor": "CA Rachana Ranade",
+      "topics": [
+        "Savings",
+        "Budgeting",
+        "Emergency Fund",
+        "Financial Goals"
+      ],
+      "isFeatured": true,
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "category": "basics",
+      "type": "video",
+      "title": "Power of Compounding - How Money Grows",
+      "description": "Understand the magic of compound interest and why starting early is the biggest advantage in wealth creation.",
+      "thumbnail": "https://i.ytimg.com/vi/P1ww1IXRfTA/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/P1ww1IXRfTA",
+      "duration": "12 min",
+      "level": "Beginner",
+      "views": "890K",
+      "rating": 4.7,
+      "instructor": "Ankur Warikoo",
+      "topics": [
+        "Compounding",
+        "Time Value",
+        "Early Investing",
+        "Wealth Creation"
+      ],
+      "isFeatured": false,
+      "isActive": true,
+      "createdAt": "2024-01-15T00:00:00.000Z"
+    },
+    {
+      "id": "3",
+      "category": "basics",
+      "type": "presentation",
+      "title": "Complete Guide to Personal Finance",
+      "description": "A comprehensive presentation covering all aspects of personal finance - from saving to investing to insurance.",
+      "thumbnail": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=600&auto=format&fit=crop",
+      "duration": "45 slides",
+      "level": "Beginner",
+      "views": "3.2K",
+      "rating": 4.9,
+      "instructor": "Systematic Investments",
+      "topics": [
+        "Saving",
+        "Investing",
+        "Insurance",
+        "Tax"
+      ],
+      "downloadUrl": "#",
+      "isFeatured": false,
+      "isActive": true,
+      "createdAt": "2024-02-01T00:00:00.000Z"
+    },
+    {
+      "id": "4",
+      "category": "investing",
+      "type": "video",
+      "title": "Mutual Funds Explained in Hindi - Types & How to Invest",
+      "description": "Everything you need to know about mutual funds - types, how they work, expense ratio, and how to start investing in mutual funds.",
+      "thumbnail": "https://i.ytimg.com/vi/RbfWMOYDG0s/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/RbfWMOYDG0s",
+      "duration": "22 min",
+      "level": "Beginner",
+      "views": "3.8M",
+      "rating": 4.9,
+      "instructor": "Pranjal Kamra",
+      "topics": [
+        "Mutual Funds",
+        "SIP",
+        "Expense Ratio",
+        "NAV"
+      ],
+      "isFeatured": true,
+      "isActive": true,
+      "createdAt": "2024-02-15T00:00:00.000Z"
+    },
+    {
+      "id": "5",
+      "category": "investing",
+      "type": "video",
+      "title": "SIP Investment Guide - How to Start & Best Practices",
+      "description": "Complete guide to SIP investing. Learn how SIP works, benefits of rupee cost averaging, and common mistakes to avoid.",
+      "thumbnail": "https://i.ytimg.com/vi/WsUVYf8aJNk/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/WsUVYf8aJNk",
+      "duration": "16 min",
+      "level": "Beginner",
+      "views": "2.1M",
+      "rating": 4.8,
+      "instructor": "Asset Yogi",
+      "topics": [
+        "SIP",
+        "Rupee Cost Averaging",
+        "Mutual Funds",
+        "Investment"
+      ],
+      "isFeatured": false,
+      "isActive": true,
+      "createdAt": "2024-03-01T00:00:00.000Z"
+    },
+    {
+      "id": "6",
+      "category": "investing",
+      "type": "video",
+      "title": "How to Select Best Mutual Funds - Step by Step",
+      "description": "Learn how to analyze and select the best mutual funds based on returns, risk, fund manager, and expense ratio.",
+      "thumbnail": "https://i.ytimg.com/vi/hVHdE0Bj5JU/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/hVHdE0Bj5JU",
+      "duration": "20 min",
+      "level": "Intermediate",
+      "views": "1.5M",
+      "rating": 4.7,
+      "instructor": "CA Rachana Ranade",
+      "topics": [
+        "Fund Selection",
+        "Returns Analysis",
+        "Risk Assessment",
+        "AMC"
+      ],
+      "isFeatured": false,
+      "isActive": true,
+      "createdAt": "2024-03-15T00:00:00.000Z"
+    },
+    {
+      "id": "7",
+      "category": "mfd",
+      "type": "video",
+      "title": "How to Become MFD - Mutual Fund Distributor Complete Guide",
+      "description": "Step-by-step guide to becoming a Mutual Fund Distributor. NISM exam, AMFI registration, ARN code, and starting your MFD business.",
+      "thumbnail": "https://i.ytimg.com/vi/NxPj9gIjDd0/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/NxPj9gIjDd0",
+      "duration": "28 min",
+      "level": "Professional",
+      "views": "450K",
+      "rating": 4.9,
+      "instructor": "Asset Yogi",
+      "topics": [
+        "NISM Exam",
+        "AMFI Registration",
+        "ARN Code",
+        "MFD Business"
+      ],
+      "isFeatured": true,
+      "isActive": true,
+      "createdAt": "2024-04-01T00:00:00.000Z"
+    },
+    {
+      "id": "8",
+      "category": "mfd",
+      "type": "video",
+      "title": "NISM Series VA Exam Preparation - Complete Course",
+      "description": "Everything you need to clear NISM Mutual Fund Distributors exam. Key topics, practice questions, and exam tips.",
+      "thumbnail": "https://i.ytimg.com/vi/UyVP2GkLdKw/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/UyVP2GkLdKw",
+      "duration": "45 min",
+      "level": "Professional",
+      "views": "280K",
+      "rating": 4.8,
+      "instructor": "Finance Tube",
+      "topics": [
+        "NISM Exam",
+        "Certification",
+        "Study Material",
+        "Exam Tips"
+      ],
+      "isFeatured": false,
+      "isActive": true,
+      "createdAt": "2024-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "9",
+      "category": "mfd",
+      "type": "presentation",
+      "title": "MFD Business Plan Template",
+      "description": "Ready-to-use business plan template for new and aspiring Mutual Fund Distributors. Includes financial projections.",
+      "thumbnail": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop",
+      "duration": "30 slides",
+      "level": "Professional",
+      "views": "2.1K",
+      "rating": 4.7,
+      "instructor": "Systematic Investments",
+      "topics": [
+        "Business Model",
+        "Revenue Projections",
+        "Marketing Plan",
+        "Growth Strategy"
+      ],
+      "downloadUrl": "#",
+      "isFeatured": false,
+      "isActive": true,
+      "createdAt": "2024-05-01T00:00:00.000Z"
+    },
+    {
+      "id": "10",
+      "category": "retirement",
+      "type": "video",
+      "title": "Retirement Planning India - How Much Money You Need?",
+      "description": "Calculate your retirement corpus. Learn about inflation impact, healthcare costs, and creating a retirement income strategy.",
+      "thumbnail": "https://i.ytimg.com/vi/VyLPMH8OGXM/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/VyLPMH8OGXM",
+      "duration": "24 min",
+      "level": "Intermediate",
+      "views": "1.8M",
+      "rating": 4.9,
+      "instructor": "Labour Law Advisor",
+      "topics": [
+        "Retirement Corpus",
+        "Inflation",
+        "Pension Planning",
+        "FIRE"
+      ],
+      "isFeatured": true,
+      "isActive": true,
+      "createdAt": "2024-05-15T00:00:00.000Z"
+    },
+    {
+      "id": "11",
+      "category": "retirement",
+      "type": "video",
+      "title": "NPS Complete Guide - National Pension System Explained",
+      "description": "Everything about NPS - account types, tax benefits under 80CCD, fund choices, and withdrawal rules explained in detail.",
+      "thumbnail": "https://i.ytimg.com/vi/xBmC7Eg8mMY/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/xBmC7Eg8mMY",
+      "duration": "20 min",
+      "level": "Intermediate",
+      "views": "2.4M",
+      "rating": 4.8,
+      "instructor": "CA Rachana Ranade",
+      "topics": [
+        "NPS",
+        "80CCD",
+        "Pension",
+        "Tax Benefits"
+      ],
+      "isFeatured": false,
+      "isActive": true,
+      "createdAt": "2024-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "12",
+      "category": "tax",
+      "type": "video",
+      "title": "Income Tax New vs Old Regime - Which is Better for You?",
+      "description": "Detailed comparison of new and old tax regime with calculations. Find out which regime saves more tax based on your salary.",
+      "thumbnail": "https://i.ytimg.com/vi/VU6rLiT0KqQ/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/VU6rLiT0KqQ",
+      "duration": "18 min",
+      "level": "Beginner",
+      "views": "4.2M",
+      "rating": 4.9,
+      "instructor": "CA Rachana Ranade",
+      "topics": [
+        "Tax Regime",
+        "80C Deductions",
+        "Tax Calculation",
+        "Tax Saving"
+      ],
+      "isFeatured": true,
+      "isActive": true,
+      "createdAt": "2024-06-15T00:00:00.000Z"
+    },
+    {
+      "id": "13",
+      "category": "tax",
+      "type": "video",
+      "title": "Section 80C - Complete Tax Saving Options",
+      "description": "All tax saving investments under Section 80C - ELSS, PPF, NPS, LIC, home loan principal, and more. Maximize your ₹1.5 lakh limit.",
+      "thumbnail": "https://i.ytimg.com/vi/8K8Hkgln8mw/hqdefault.jpg",
+      "videoUrl": "https://www.youtube.com/embed/8K8Hkgln8mw",
+      "duration": "15 min",
+      "level": "Beginner",
+      "views": "2.8M",
+      "rating": 4.8,
+      "instructor": "Pranjal Kamra",
+      "topics": [
+        "80C",
+        "ELSS",
+        "PPF",
+        "Tax Saving",
+        "Deductions"
+      ],
+      "isFeatured": false,
+      "isActive": true,
+      "createdAt": "2024-07-01T00:00:00.000Z"
+    },
+    {
+      "id": "14",
+      "category": "tax",
+      "type": "presentation",
+      "title": "Complete Tax Planning Guide FY 2024-25",
+      "description": "Comprehensive presentation on tax planning strategies for the current financial year.",
+      "thumbnail": "https://images.unsplash.com/photo-1554224154-26032ffc0d07?q=80&w=600&auto=format&fit=crop",
+      "duration": "50 slides",
+      "level": "Intermediate",
+      "views": "2.8K",
+      "rating": 4.9,
+      "instructor": "Systematic Investments",
+      "topics": [
+        "Tax Slabs",
+        "Deductions",
+        "Capital Gains",
+        "Tax-Free Income"
+      ],
+      "downloadUrl": "#",
+      "isFeatured": false,
+      "isActive": true,
+      "createdAt": "2024-07-15T00:00:00.000Z"
+    }
+  ],
+  "categories": [
+    {
+      "key": "basics",
+      "label": "Basics",
+      "fullLabel": "Basics"
+    },
+    {
+      "key": "investing",
+      "label": "Invest",
+      "fullLabel": "Investing"
+    },
+    {
+      "key": "mfd",
+      "label": "MFD",
+      "fullLabel": "For MFDs"
+    },
+    {
+      "key": "retirement",
+      "label": "Retire",
+      "fullLabel": "Retirement"
+    },
+    {
+      "key": "tax",
+      "label": "Tax",
+      "fullLabel": "Tax Planning"
+    }
+  ]
+}

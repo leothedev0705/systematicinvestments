@@ -10,14 +10,14 @@ import Link from "next/link";
 const navLinks = [
   { name: "About", href: "#about" },
   { name: "Services", href: "#services" },
-  { name: "Mission", href: "#mission" },
-  { name: "Recognitions", href: "#recognitions" },
   { name: "Process", href: "#process" },
   { name: "Team", href: "#team" },
   { name: "Contact", href: "#contact" },
 ];
 
 const externalLinks = [
+  { name: "Updates", href: "/updates" },
+  { name: "Learn", href: "/learn" },
   { name: "Tools", href: "/tools" },
   { name: "Insights", href: "/blogs" },
 ];
@@ -151,11 +151,31 @@ export const Navbar: React.FC = () => {
                     {link.name}
                   </motion.button>
                 ))}
-                <Link href="/tools" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link href="/updates" onClick={() => setIsMobileMenuOpen(false)}>
                   <motion.span
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: navLinks.length * 0.05 }}
+                    className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
+                  >
+                    📢 Updates & Bonds
+                  </motion.span>
+                </Link>
+                <Link href="/learn" onClick={() => setIsMobileMenuOpen(false)}>
+                  <motion.span
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: (navLinks.length + 1) * 0.05 }}
+                    className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
+                  >
+                    🎓 Learn Finance
+                  </motion.span>
+                </Link>
+                <Link href="/tools" onClick={() => setIsMobileMenuOpen(false)}>
+                  <motion.span
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: (navLinks.length + 2) * 0.05 }}
                     className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
                   >
                     📊 Financial Tools
@@ -165,7 +185,7 @@ export const Navbar: React.FC = () => {
                   <motion.span
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: (navLinks.length + 1) * 0.05 }}
+                    transition={{ delay: (navLinks.length + 3) * 0.05 }}
                     className="w-full px-4 py-3 text-left text-base font-medium text-accent hover:bg-accent/10 rounded-xl transition-colors inline-block"
                   >
                     📰 Insights & News

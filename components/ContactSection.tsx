@@ -153,10 +153,10 @@ export const ContactSection: React.FC = () => {
                 </h3>
               </div>
 
-              {/* Google Maps Embed */}
+              {/* Google Maps Embed - Exact coordinates: 19.2157°N, 72.9708°E */}
               <div className="relative h-[calc(100%-80px)] min-h-[320px]">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3767.7699377668597!2d72.96835647520797!3d19.21574168200985!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7b90b5a6f1233%3A0x5c2e1a8bde1b4f1a!2sBrahmand%20Phase%206%2C%20Azad%20Nagar%2C%20Thane%20West%2C%20Thane%2C%20Maharashtra%20400607!5e0!3m2!1sen!2sin!4v1701701234567!5m2!1sen!2sin"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d942.0!2d72.9708!3d19.2157!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDEyJzU2LjUiTiA3MsKwNTgnMTQuOSJF!5e0!3m2!1sen!2sin!4v1701701234567!5m2!1sen!2sin&markers=color:red%7C19.2157,72.9708"
                   width="100%"
                   height="100%"
                   style={{ border: 0, minHeight: '320px' }}
@@ -167,23 +167,48 @@ export const ContactSection: React.FC = () => {
                   className="absolute inset-0"
                 />
                 
+                {/* Red Pin Marker Overlay */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full z-20 pointer-events-none">
+                  <div className="relative">
+                    <svg width="40" height="50" viewBox="0 0 40 50" className="drop-shadow-lg">
+                      <path
+                        d="M20 0C8.954 0 0 8.954 0 20c0 15 20 30 20 30s20-15 20-30C40 8.954 31.046 0 20 0z"
+                        fill="#DC2626"
+                      />
+                      <circle cx="20" cy="18" r="8" fill="#FEE2E2" />
+                    </svg>
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-600/30 rounded-full blur-sm" />
+                  </div>
+                </div>
+                
                 {/* Location overlay card */}
                 <div className="absolute bottom-4 left-4 right-4 z-10">
                   <a 
-                    href="https://maps.google.com/?q=Shop+No+42/E3+Brahmand+Phase+6+Thane+West+400607"
+                    href="https://www.google.com/maps/dir/?api=1&destination=19.2157,72.9708&destination_place_id=Systematic+Investments"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-elevated hover:bg-white transition-colors"
                   >
-                    <p className="font-heading font-semibold text-primary mb-1">
-                      Systematic Investments
-                    </p>
-                    <p className="text-sm text-muted">
-                      Shop No. 42/E3, Brahmand Phase 6, Thane West 400607
-                    </p>
-                    <p className="text-xs text-accent mt-2 font-medium">
-                      Click to open in Google Maps →
-                    </p>
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-4 h-4 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-heading font-semibold text-primary mb-1">
+                          Systematic Investments
+                        </p>
+                        <p className="text-sm text-muted">
+                          Shop No. 42/E3, Brahmand Phase 6, Thane West 400607
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          📍 19.2157°N, 72.9708°E
+                        </p>
+                        <p className="text-xs text-accent mt-2 font-medium flex items-center gap-1">
+                          Get Directions
+                          <ArrowRight className="w-3 h-3" />
+                        </p>
+                      </div>
+                    </div>
                   </a>
                 </div>
               </div>

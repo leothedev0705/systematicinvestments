@@ -27,6 +27,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# CMS settings (contains passwords)
+data/settings.json
+
 # Vercel
 .vercel
 
@@ -42,4 +45,6 @@ next-env.d.ts
 
 # OS
 Thumbs.db
+
+
 

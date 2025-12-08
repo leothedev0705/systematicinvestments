@@ -9,9 +9,9 @@ import { Calendar, TrendingUp, Users } from "lucide-react";
 const stats = [
   {
     icon: Calendar,
-    value: "25+",
+    value: "26+",
     label: "Years in the Business",
-    description: "Trusted expertise since 1996",
+    description: "Trusted expertise since 1999",
   },
   {
     icon: TrendingUp,
