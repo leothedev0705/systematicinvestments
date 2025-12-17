@@ -1,30 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-
-const DATA_FILE = path.join(process.cwd(), "data", "learn.json");
-
-// Helper to read data
-function readData() {
-  try {
-    const data = fs.readFileSync(DATA_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return { content: [], categories: [] };
-  }
-}
-
-// Helper to write data
-function writeData(data: { content: unknown[]; categories: unknown[] }) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
+import { getLearnContent, setLearnContent, type LearnContent } from "@/lib/kv";
 
 // GET all content
 export async function GET() {
   try {
-    const data = readData();
+    const data = await getLearnContent();
     return NextResponse.json(data);
   } catch (error) {
+    console.error("Error fetching learn content:", error);
     return NextResponse.json({ error: "Failed to fetch content" }, { status: 500 });
   }
 }
@@ -33,20 +16,21 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const data = readData();
+    const data = await getLearnContent();
     
-    const newContent = {
+    const newContent: LearnContent = {
       ...body,
       id: Date.now().toString(),
-      isActive: true,
+      isActive: body.isActive !== undefined ? body.isActive : true,
       createdAt: new Date().toISOString(),
     };
     
     data.content.unshift(newContent);
-    writeData(data);
+    await setLearnContent(data);
     
     return NextResponse.json(newContent, { status: 201 });
   } catch (error) {
+    console.error("Error creating learn content:", error);
     return NextResponse.json({ error: "Failed to create content" }, { status: 500 });
   }
 }
@@ -57,18 +41,19 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { id, ...updateData } = body;
     
-    const data = readData();
-    const index = data.content.findIndex((c: { id: string }) => c.id === id);
+    const data = await getLearnContent();
+    const index = data.content.findIndex((c) => c.id === id);
     
     if (index === -1) {
       return NextResponse.json({ error: "Content not found" }, { status: 404 });
     }
     
     data.content[index] = { ...data.content[index], ...updateData };
-    writeData(data);
+    await setLearnContent(data);
     
     return NextResponse.json(data.content[index]);
   } catch (error) {
+    console.error("Error updating learn content:", error);
     return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 }
@@ -83,13 +68,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID required" }, { status: 400 });
     }
     
-    const data = readData();
-    data.content = data.content.filter((c: { id: string }) => c.id !== id);
-    writeData(data);
+    const data = await getLearnContent();
+    data.content = data.content.filter((c) => c.id !== id);
+    await setLearnContent(data);
     
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Error deleting learn content:", error);
     return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }
+
+
 

@@ -1,30 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-
-const DATA_FILE = path.join(process.cwd(), "data", "updates.json");
-
-// Helper to read data
-function readData() {
-  try {
-    const data = fs.readFileSync(DATA_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return { updates: [] };
-  }
-}
-
-// Helper to write data
-function writeData(data: { updates: unknown[] }) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
+import { getUpdates, setUpdates, type Update } from "@/lib/kv";
 
 // GET all updates
 export async function GET() {
   try {
-    const data = readData();
-    return NextResponse.json(data.updates);
+    const updates = await getUpdates();
+    return NextResponse.json(updates);
   } catch (error) {
+    console.error("Error fetching updates:", error);
     return NextResponse.json({ error: "Failed to fetch updates" }, { status: 500 });
   }
 }
@@ -33,19 +16,20 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const data = readData();
+    const updates = await getUpdates();
     
-    const newUpdate = {
+    const newUpdate: Update = {
       ...body,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
     };
     
-    data.updates.unshift(newUpdate);
-    writeData(data);
+    updates.unshift(newUpdate);
+    await setUpdates(updates);
     
     return NextResponse.json(newUpdate, { status: 201 });
   } catch (error) {
+    console.error("Error creating update:", error);
     return NextResponse.json({ error: "Failed to create update" }, { status: 500 });
   }
 }
@@ -56,18 +40,19 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { id, ...updateData } = body;
     
-    const data = readData();
-    const index = data.updates.findIndex((u: { id: string }) => u.id === id);
+    const updates = await getUpdates();
+    const index = updates.findIndex((u) => u.id === id);
     
     if (index === -1) {
       return NextResponse.json({ error: "Update not found" }, { status: 404 });
     }
     
-    data.updates[index] = { ...data.updates[index], ...updateData };
-    writeData(data);
+    updates[index] = { ...updates[index], ...updateData };
+    await setUpdates(updates);
     
-    return NextResponse.json(data.updates[index]);
+    return NextResponse.json(updates[index]);
   } catch (error) {
+    console.error("Error updating update:", error);
     return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 }
@@ -82,13 +67,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID required" }, { status: 400 });
     }
     
-    const data = readData();
-    data.updates = data.updates.filter((u: { id: string }) => u.id !== id);
-    writeData(data);
+    const updates = await getUpdates();
+    const filtered = updates.filter((u) => u.id !== id);
+    await setUpdates(filtered);
     
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Error deleting update:", error);
     return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }
+
+
 

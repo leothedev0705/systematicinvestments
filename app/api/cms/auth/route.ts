@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-
-// Get admin password from settings or env
-function getAdminPassword(): string {
-  try {
-    const settingsFile = path.join(process.cwd(), "data", "settings.json");
-    const data = fs.readFileSync(settingsFile, "utf-8");
-    const settings = JSON.parse(data);
-    return settings.adminPassword || process.env.CMS_PASSWORD || "systematic2024";
-  } catch {
-    return process.env.CMS_PASSWORD || "systematic2024";
-  }
-}
+import { getAdminPassword } from "@/lib/kv";
 
 export async function POST(request: NextRequest) {
   try {
     const { password } = await request.json();
-    const ADMIN_PASSWORD = getAdminPassword();
+    const ADMIN_PASSWORD = await getAdminPassword();
     
     if (password === ADMIN_PASSWORD) {
       // Create a simple session token
@@ -39,6 +26,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   } catch (error) {
+    console.error("Error authenticating:", error);
     return NextResponse.json({ error: "Authentication failed" }, { status: 500 });
   }
 }

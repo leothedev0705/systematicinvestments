@@ -274,3 +274,5 @@ export const DataTable: React.FC<DataTableProps> = ({ columns, data, maxRows = 1
 
 
 
+
+

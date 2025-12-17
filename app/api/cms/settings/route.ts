@@ -1,37 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-
-const SETTINGS_FILE = path.join(process.cwd(), "data", "settings.json");
-
-// Helper to read settings
-function readSettings() {
-  try {
-    const data = fs.readFileSync(SETTINGS_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return { adminPassword: null, lastPasswordChange: null };
-  }
-}
-
-// Helper to write settings
-function writeSettings(data: Record<string, unknown>) {
-  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(data, null, 2));
-}
-
-// Get current password (for validation) - internal function, not exported
-function getAdminPassword(): string {
-  const settings = readSettings();
-  // If custom password is set in settings, use it; otherwise fall back to env
-  return settings.adminPassword || process.env.CMS_PASSWORD || "systematic2024";
-}
+import { getSettings, setSettings, getAdminPassword } from "@/lib/kv";
 
 // POST - Change password
 export async function POST(request: NextRequest) {
   try {
     const { currentPassword, newPassword } = await request.json();
     
-    const actualPassword = getAdminPassword();
+    const actualPassword = await getAdminPassword();
     
     // Verify current password
     if (currentPassword !== actualPassword) {
@@ -44,13 +19,14 @@ export async function POST(request: NextRequest) {
     }
     
     // Update settings
-    const settings = readSettings();
+    const settings = await getSettings();
     settings.adminPassword = newPassword;
     settings.lastPasswordChange = new Date().toISOString();
-    writeSettings(settings);
+    await setSettings(settings);
     
     return NextResponse.json({ success: true, message: "Password changed successfully" });
   } catch (error) {
+    console.error("Error changing password:", error);
     return NextResponse.json({ error: "Failed to change password" }, { status: 500 });
   }
 }
