@@ -8,7 +8,6 @@ import {
   TrendingUp,
   Calendar,
   Share2,
-  Download,
   ArrowRight,
   ArrowLeft,
   Bell,
@@ -23,6 +22,7 @@ import {
   Target,
   Loader2,
 } from "lucide-react";
+import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
@@ -42,6 +42,7 @@ interface Update {
   isNew: boolean;
   features: string[];
   documentUrl?: string;
+  imageUrl?: string;
 }
 
 const categories = [
@@ -101,70 +102,6 @@ export default function UpdatesPage() {
     window.open(whatsappUrl, "_blank");
   };
 
-  const handleDownload = (update: Update) => {
-    const content = `
-════════════════════════════════════════════════════════
-                    SYSTEMATIC INVESTMENTS
-                  Financial Update Document
-════════════════════════════════════════════════════════
-
-${update.type === "bond" ? "📈 BOND/NCD UPDATE" : update.type === "news" ? "📰 MARKET NEWS" : "📄 DOCUMENT"}
-
-Title: ${update.title}
-Category: ${update.category || "General"}
-Date: ${update.date}
-
-────────────────────────────────────────────────────────
-
-DESCRIPTION:
-${update.description}
-
-${update.fullDescription ? `\nDETAILED INFORMATION:\n${update.fullDescription}` : ""}
-
-${
-  update.type === "bond" && update.rate
-    ? `
-────────────────────────────────────────────────────────
-BOND DETAILS:
-────────────────────────────────────────────────────────
-• Interest Rate: ${update.rate}
-• Minimum Investment: ${update.minInvestment}
-• Maximum Investment: ${update.maxInvestment || "No Limit"}
-• Tenure: ${update.tenure}
-`
-    : ""
-}
-
-────────────────────────────────────────────────────────
-KEY FEATURES:
-────────────────────────────────────────────────────────
-${update.features.map((f) => `  ✓ ${f}`).join("\n")}
-
-════════════════════════════════════════════════════════
-                    CONTACT US
-════════════════════════════════════════════════════════
-
-Systematic Investments
-📞 +91 98212 55653 | +91 82916 93953
-📧 info.systematic@gmail.com
-📍 Shop No. 42/E3, Brahmand Phase 6, Thane West 400607
-
-For personalized advice, book a FREE portfolio review!
-
-════════════════════════════════════════════════════════
-`;
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${update.title.replace(/[^a-zA-Z0-9]/g, "_")}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showNotification("Download started!");
-  };
 
   return (
     <>
@@ -308,6 +245,19 @@ For personalized advice, book a FREE portfolio review!
                       "bg-gradient-to-r from-purple-400 to-purple-600"
                     }`} />
 
+                    {/* Image */}
+                    {update.imageUrl && (
+                      <div className="relative w-full h-48 bg-gray-100 overflow-hidden">
+                        <Image
+                          src={update.imageUrl}
+                          alt={update.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      </div>
+                    )}
+
                     <div className="p-6 relative">
                       {/* Header */}
                       <div className="flex items-start gap-4 mb-4">
@@ -396,19 +346,10 @@ For personalized advice, book a FREE portfolio review!
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => handleShare(update)}
-                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium transition-colors"
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium transition-colors"
                         >
                           <Share2 className="w-4 h-4" />
                           Share
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => handleDownload(update)}
-                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors"
-                        >
-                          <Download className="w-4 h-4" />
-                          Download
                         </motion.button>
                       </div>
                     </div>

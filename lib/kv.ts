@@ -61,6 +61,7 @@ export interface Update {
   isNew: boolean;
   features: string[];
   documentUrl?: string;
+  imageUrl?: string;
   createdAt: string;
 }
 

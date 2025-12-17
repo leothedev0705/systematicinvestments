@@ -46,6 +46,7 @@ interface Update {
   isNew: boolean;
   features: string[];
   documentUrl?: string;
+  imageUrl?: string;
   createdAt: string;
 }
 
@@ -319,10 +320,6 @@ const LoginForm = ({ onLogin }: { onLogin: () => void }) => {
             {loading ? "Logging in..." : "Login to CMS"}
           </button>
         </form>
-
-        <p className="text-center text-xs text-muted mt-6">
-          Default password: vb@29121971
-        </p>
       </motion.div>
     </div>
   );
@@ -333,10 +330,12 @@ const UpdateForm = ({
   update,
   onSave,
   onCancel,
+  isSaving,
 }: {
   update?: Update;
   onSave: (data: Partial<Update>) => void;
   onCancel: () => void;
+  isSaving?: boolean;
 }) => {
   const [formData, setFormData] = useState<Partial<Update>>(
     update || {
@@ -353,6 +352,7 @@ const UpdateForm = ({
       isNew: true,
       features: [],
       documentUrl: "#",
+      imageUrl: "",
     }
   );
   const [featuresText, setFeaturesText] = useState(formData.features?.join(", ") || "");
@@ -502,6 +502,18 @@ const UpdateForm = ({
       </div>
 
       <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL (Optional)</label>
+        <input
+          type="url"
+          value={formData.imageUrl || ""}
+          onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20"
+          placeholder="https://example.com/image.jpg"
+        />
+        <p className="text-xs text-gray-500 mt-1">Add an image URL to display with this update</p>
+      </div>
+
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Features (comma-separated)</label>
         <input
           type="text"
@@ -515,10 +527,20 @@ const UpdateForm = ({
       <div className="flex gap-2 pt-4">
         <button
           type="submit"
-          className="flex-1 py-2 bg-primary hover:bg-primary-light text-white rounded-lg font-medium flex items-center justify-center gap-2"
+          disabled={isSaving}
+          className="flex-1 py-2 bg-primary hover:bg-primary-light text-white rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Save className="w-4 h-4" />
-          {update ? "Update" : "Create"}
+          {isSaving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              {update ? "Update" : "Create"}
+            </>
+          )}
         </button>
         <button
           type="button"
@@ -782,6 +804,7 @@ export default function AdminPage() {
   const [showLearnForm, setShowLearnForm] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [isSavingUpdate, setIsSavingUpdate] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -839,6 +862,9 @@ export default function AdminPage() {
 
   // Update CRUD
   const handleSaveUpdate = async (data: Partial<Update>) => {
+    if (isSavingUpdate) return; // Prevent double submission
+    
+    setIsSavingUpdate(true);
     try {
       const method = editingUpdate ? "PUT" : "POST";
       const body = editingUpdate ? { ...data, id: editingUpdate.id } : data;
@@ -854,9 +880,13 @@ export default function AdminPage() {
         loadUpdates();
         setShowUpdateForm(false);
         setEditingUpdate(null);
+      } else {
+        showToast("Failed to save", "error");
       }
     } catch {
       showToast("Failed to save", "error");
+    } finally {
+      setIsSavingUpdate(false);
     }
   };
 
@@ -1076,6 +1106,7 @@ export default function AdminPage() {
                       update={editingUpdate || undefined}
                       onSave={handleSaveUpdate}
                       onCancel={() => { setShowUpdateForm(false); setEditingUpdate(null); }}
+                      isSaving={isSavingUpdate}
                     />
                   </motion.div>
                 </motion.div>
