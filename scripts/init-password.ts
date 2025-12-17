@@ -7,19 +7,28 @@
  * Make sure you have KV_REST_API_URL and KV_REST_API_TOKEN in your .env.local
  */
 
-import { kv } from "@vercel/kv";
+import { createClient } from "@vercel/kv";
 
 const INITIAL_PASSWORD = "vb@29121971";
 
 async function initPassword() {
   console.log("🔐 Initializing CMS password...\n");
 
-  // Check for KV environment variables
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+  // Check for KV environment variables (support both naming conventions)
+  const kvUrl = process.env.CMS_KV_REST_API_URL || process.env.KV_REST_API_URL;
+  const kvToken = process.env.CMS_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN;
+  
+  if (!kvUrl || !kvToken) {
     console.error("❌ Missing KV environment variables!");
-    console.log("Please set KV_REST_API_URL and KV_REST_API_TOKEN in your .env.local");
+    console.log("Please set CMS_KV_REST_API_URL and CMS_KV_REST_API_TOKEN in your .env.local");
+    console.log("(Or KV_REST_API_URL and KV_REST_API_TOKEN)");
     process.exit(1);
   }
+  
+  const kv = createClient({
+    url: kvUrl,
+    token: kvToken,
+  });
 
   try {
     // Get existing settings or create new

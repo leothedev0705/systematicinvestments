@@ -1,4 +1,22 @@
-import { kv } from "@vercel/kv";
+import { createClient } from "@vercel/kv";
+
+// Initialize KV client with support for CMS_ prefixed variables
+// Vercel creates variables with CMS_ prefix when connecting through the dashboard
+const getKVClient = () => {
+  const url = process.env.CMS_KV_REST_API_URL || process.env.KV_REST_API_URL;
+  const token = process.env.CMS_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN;
+  
+  if (!url || !token) {
+    throw new Error("KV credentials not found. Please set CMS_KV_REST_API_URL and CMS_KV_REST_API_TOKEN (or KV_REST_API_URL and KV_REST_API_TOKEN)");
+  }
+  
+  return createClient({
+    url,
+    token,
+  });
+};
+
+const kv = getKVClient();
 
 // KV Keys
 const KV_KEYS = {

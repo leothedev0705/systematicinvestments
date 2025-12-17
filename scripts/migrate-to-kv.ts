@@ -9,9 +9,18 @@
  * 2. Existing data files in the data/ directory
  */
 
-import { kv } from "@vercel/kv";
+import { createClient } from "@vercel/kv";
 import fs from "fs";
 import path from "path";
+
+// Initialize KV client
+const kvUrl = process.env.CMS_KV_REST_API_URL || process.env.KV_REST_API_URL || "";
+const kvToken = process.env.CMS_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN || "";
+
+const kv = createClient({
+  url: kvUrl,
+  token: kvToken,
+});
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -86,10 +95,14 @@ async function migrateSettings() {
 async function main() {
   console.log("🚀 Starting migration to Vercel KV...\n");
 
-  // Check for KV environment variables
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+  // Check for KV environment variables (support both naming conventions)
+  const kvUrl = process.env.CMS_KV_REST_API_URL || process.env.KV_REST_API_URL;
+  const kvToken = process.env.CMS_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN;
+  
+  if (!kvUrl || !kvToken) {
     console.error("❌ Missing KV environment variables!");
-    console.log("Please set KV_REST_API_URL and KV_REST_API_TOKEN in your .env.local");
+    console.log("Please set CMS_KV_REST_API_URL and CMS_KV_REST_API_TOKEN in your .env.local");
+    console.log("(Or KV_REST_API_URL and KV_REST_API_TOKEN)");
     console.log("You can find these in your Vercel dashboard under Storage > KV");
     process.exit(1);
   }
