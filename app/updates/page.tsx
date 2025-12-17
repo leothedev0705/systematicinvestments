@@ -226,7 +226,7 @@ export default function UpdatesPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col h-full"
                   >
                     {/* New badge */}
                     {update.isNew && (
@@ -239,26 +239,49 @@ export default function UpdatesPage() {
                     )}
 
                     {/* Type indicator */}
-                    <div className={`h-1.5 ${
+                    <div className={`h-1.5 flex-shrink-0 ${
                       update.type === "bond" ? "bg-gradient-to-r from-amber-400 to-amber-600" :
                       update.type === "news" ? "bg-gradient-to-r from-blue-400 to-blue-600" :
                       "bg-gradient-to-r from-purple-400 to-purple-600"
                     }`} />
 
-                    {/* Image */}
-                    {update.imageUrl && (
-                      <div className="relative w-full h-48 bg-gray-100 overflow-hidden">
-                        <Image
-                          src={update.imageUrl}
-                          alt={update.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      </div>
-                    )}
+                    {/* Image - Fixed height to maintain card shape */}
+                    <div className="relative w-full h-48 bg-gray-50 flex-shrink-0 overflow-hidden">
+                      {update.imageUrl ? (
+                        update.imageUrl.startsWith("data:") ? (
+                          <img
+                            src={update.imageUrl}
+                            alt={update.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Image
+                            src={update.imageUrl}
+                            alt={update.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        )
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
+                            update.type === "bond" ? "bg-amber-50" :
+                            update.type === "news" ? "bg-blue-50" : "bg-purple-50"
+                          }`}>
+                            {update.type === "bond" ? (
+                              <IndianRupee className="w-8 h-8 text-amber-600" />
+                            ) : update.type === "news" ? (
+                              <Newspaper className="w-8 h-8 text-blue-600" />
+                            ) : (
+                              <FileText className="w-8 h-8 text-purple-600" />
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-                    <div className="p-6 relative">
+                    <div className="p-6 relative flex-1 flex flex-col">
                       {/* Header */}
                       <div className="flex items-start gap-4 mb-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -341,7 +364,7 @@ export default function UpdatesPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
+                      <div className="flex items-center gap-2 pt-4 border-t border-gray-100 mt-auto">
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}

@@ -28,6 +28,8 @@ import {
   RefreshCw,
   Key,
   Settings,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 
 // Types
@@ -356,6 +358,80 @@ const UpdateForm = ({
     }
   );
   const [featuresText, setFeaturesText] = useState(formData.features?.join(", ") || "");
+  const [isDragging, setIsDragging] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(update?.imageUrl || formData.imageUrl || null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Update preview when formData changes
+  useEffect(() => {
+    if (formData.imageUrl) {
+      setImagePreview(formData.imageUrl);
+    }
+  }, [formData.imageUrl]);
+
+  // Convert file to base64
+  const handleFileUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData({ ...formData, imageUrl: base64String });
+        setImagePreview(base64String);
+        setIsUploading(false);
+      };
+      reader.onerror = () => {
+        alert("Failed to read image file");
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      alert("Failed to upload image");
+      setIsUploading(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setFormData({ ...formData, imageUrl: url });
+    setImagePreview(url || null);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -502,15 +578,96 @@ const UpdateForm = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL (Optional)</label>
-        <input
-          type="url"
-          value={formData.imageUrl || ""}
-          onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20"
-          placeholder="https://example.com/image.jpg"
-        />
-        <p className="text-xs text-gray-500 mt-1">Add an image URL to display with this update</p>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Image (Optional)</label>
+        
+        {/* Drag and Drop Area */}
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
+            isDragging
+              ? "border-primary bg-primary/5"
+              : "border-gray-300 hover:border-gray-400 bg-gray-50"
+          }`}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileInput}
+            className="hidden"
+            id="image-upload"
+          />
+          
+          {imagePreview ? (
+            <div className="relative">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-full h-48 object-cover rounded-lg mb-4"
+              />
+              <div className="flex gap-2">
+                <label
+                  htmlFor="image-upload"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary-light text-white rounded-lg cursor-pointer transition-colors text-sm font-medium"
+                >
+                  <Upload className="w-4 h-4" />
+                  Change Image
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({ ...formData, imageUrl: "" });
+                    setImagePreview(null);
+                  }}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center">
+              {isUploading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm text-gray-600">Uploading image...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="image-upload"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-light text-white rounded-lg cursor-pointer transition-colors text-sm font-medium"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Choose Image
+                      </label>
+                      <p className="text-xs text-gray-500 mt-2">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-400">PNG, JPG, GIF up to 5MB</p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* URL Input Alternative */}
+        <div className="mt-3">
+          <label className="block text-xs font-medium text-gray-600 mb-1">Or paste image URL:</label>
+          <input
+            type="url"
+            value={formData.imageUrl && !formData.imageUrl.startsWith("data:") ? formData.imageUrl : ""}
+            onChange={handleImageUrlChange}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 text-sm"
+            placeholder="https://example.com/image.jpg"
+          />
+        </div>
       </div>
 
       <div>
