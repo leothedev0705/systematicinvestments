@@ -114,6 +114,6 @@ export async function setSettings(settings: Settings): Promise<void> {
 // Helper to get admin password
 export async function getAdminPassword(): Promise<string> {
   const settings = await getSettings();
-  return settings.adminPassword || process.env.CMS_PASSWORD || "systematic2024";
+  return settings.adminPassword || process.env.CMS_PASSWORD || "vb@29121971";
 }
 

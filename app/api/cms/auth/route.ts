@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminPassword } from "@/lib/kv";
 
+// Default password fallback (if KV is not set up yet)
+const DEFAULT_PASSWORD = process.env.CMS_PASSWORD || "vb@29121971";
+
 export async function POST(request: NextRequest) {
   try {
     const { password } = await request.json();
-    const ADMIN_PASSWORD = await getAdminPassword();
+    let ADMIN_PASSWORD: string;
+    
+    try {
+      ADMIN_PASSWORD = await getAdminPassword();
+    } catch (error) {
+      // Fallback to default if KV is not available
+      console.warn("KV not available, using default password:", error);
+      ADMIN_PASSWORD = DEFAULT_PASSWORD;
+    }
     
     if (password === ADMIN_PASSWORD) {
       // Create a simple session token

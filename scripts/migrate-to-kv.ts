@@ -54,12 +54,28 @@ async function migrateSettings() {
   const filePath = path.join(DATA_DIR, "settings.json");
   
   if (!fs.existsSync(filePath)) {
-    console.log("⚠️  settings.json not found, skipping...");
+    console.log("⚠️  settings.json not found, initializing with default password...");
+    // Initialize with default password
+    try {
+      const defaultSettings = {
+        adminPassword: "vb@29121971",
+        lastPasswordChange: new Date().toISOString(),
+      };
+      await kv.set("cms:settings", defaultSettings);
+      console.log("✅ Initialized settings with default password: vb@29121971");
+    } catch (error) {
+      console.error("❌ Error initializing settings:", error);
+    }
     return;
   }
 
   try {
     const fileData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    // If no password is set, use default
+    if (!fileData.adminPassword) {
+      fileData.adminPassword = "vb@29121971";
+      fileData.lastPasswordChange = new Date().toISOString();
+    }
     await kv.set("cms:settings", fileData);
     console.log("✅ Migrated settings to KV");
   } catch (error) {

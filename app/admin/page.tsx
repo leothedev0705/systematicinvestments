@@ -321,7 +321,7 @@ const LoginForm = ({ onLogin }: { onLogin: () => void }) => {
         </form>
 
         <p className="text-center text-xs text-muted mt-6">
-          Default password: systematic2024
+          Default password: vb@29121971
         </p>
       </motion.div>
     </div>
